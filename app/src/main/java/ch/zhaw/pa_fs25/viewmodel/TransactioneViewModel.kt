@@ -21,6 +21,15 @@ class TransactionViewModel(private val repository: FinanceRepository) : ViewMode
         }
     }
 
+    fun deleteLastTransaction() {
+        viewModelScope.launch {
+            val lastTransaction = transactions.value.lastOrNull()
+            if (lastTransaction != null) {
+                repository.deleteTransaction(lastTransaction)
+            }
+        }
+    }
+
     class Factory(private val repository: FinanceRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(TransactionViewModel::class.java)) {

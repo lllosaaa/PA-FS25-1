@@ -11,4 +11,8 @@ class FinanceRepository(private val transactionDao: TransactionDao) {
     suspend fun insertTransaction(transaction: Transaction) {
         transactionDao.insertTransaction(transaction)
     }
+
+    suspend fun deleteTransaction(lastTransaction: Transaction) {
+        transactionDao.deleteTransaction(lastTransaction)
+    }
 }
