@@ -10,10 +10,10 @@ import ch.zhaw.pa_fs25.data.local.dao.TransactionDao
 
 @Database(
     entities = [Transaction::class],
-    version = 2, // CHANGED: increment version from 1 to 2
+    version = 1,
     exportSchema = false
 )
-@TypeConverters(Converters::class) // CHANGED: register the Converters
+@TypeConverters(Converters::class) 
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun transactionDao(): TransactionDao
