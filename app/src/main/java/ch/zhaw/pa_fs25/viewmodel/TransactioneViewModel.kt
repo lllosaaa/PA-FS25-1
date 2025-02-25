@@ -29,6 +29,20 @@ class TransactionViewModel(private val repository: FinanceRepository) : ViewMode
             }
         }
     }
+    fun deleteFirstTransaction() {
+        viewModelScope.launch {
+            val firstTransaction = transactions.value.firstOrNull()
+            if (firstTransaction != null) {
+                repository.deleteTransaction(firstTransaction)
+            }
+        }
+    }
+
+//    fun deleteSelectedTransaction(transaction: Transaction) {
+//        viewModelScope.launch {
+//            repository.deleteTransaction(transaction)
+//        }
+//    }
 
     class Factory(private val repository: FinanceRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
