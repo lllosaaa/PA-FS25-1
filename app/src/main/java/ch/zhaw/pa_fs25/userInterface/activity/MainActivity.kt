@@ -27,6 +27,7 @@ import ch.zhaw.pa_fs25.userInterface.screen.TransactionsScreen
 import ch.zhaw.pa_fs25.viewmodel.TransactionViewModel
 import androidx.compose.ui.res.painterResource
 import ch.zhaw.pa_fs25.R
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

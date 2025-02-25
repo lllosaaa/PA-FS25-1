@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import ch.zhaw.pa_fs25.data.entity.Transaction
 import kotlinx.coroutines.flow.Flow
+import java.util.Date
 
 @Dao
 interface TransactionDao {
@@ -44,9 +45,10 @@ interface TransactionDao {
 
     /**
      * Retrieve transactions within a date range, ordered by date descending.
+     * CHANGED: Now uses Date parameters instead of String.
      */
     @Query("SELECT * FROM transactions WHERE date BETWEEN :startDate AND :endDate ORDER BY date DESC")
-    fun getTransactionsByDate(startDate: String, endDate: String): Flow<List<Transaction>>
+    fun getTransactionsByDate(startDate: Date, endDate: Date): Flow<List<Transaction>>
 
     /**
      * Get total expenses (sum of all negative amounts).

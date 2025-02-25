@@ -40,12 +40,12 @@ fun DashboardScreen(viewModel: TransactionViewModel) {
 
         // DELETE button in top-right corner
         IconButton(
-            onClick = { viewModel.deleteLastTransaction() },
+            onClick = { viewModel.deleteFirstTransaction() },
             modifier = Modifier.align(Alignment.TopEnd)
         ) {
             Icon(
                 imageVector = Icons.Default.Delete,
-                contentDescription = "Delete Last Transaction"
+                contentDescription = "Delete First Transaction"
             )
         }
 
@@ -88,6 +88,11 @@ fun DashboardScreen(viewModel: TransactionViewModel) {
 
 @Composable
 fun TransactionItem(transaction: Transaction) {
+    val dateString = remember(transaction.date) {
+        // Or create a static formatter at the top of the file for efficiency
+        val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        dateFormatter.format(transaction.date)
+    }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -100,8 +105,10 @@ fun TransactionItem(transaction: Transaction) {
                     text = transaction.description,
                     style = MaterialTheme.typography.titleSmall
                 )
+
+
                 Text(
-                    text = transaction.date,
+                    text = dateString,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -133,15 +140,17 @@ fun AddTransactionDialog(
 
     val context = LocalContext.current
     val calendar = remember { Calendar.getInstance() }
+// Store a Date, not a String
+    var selectedDate by remember { mutableStateOf(calendar.time) }
+
     val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
-    var selectedDate by remember { mutableStateOf(dateFormatter.format(calendar.time)) }
 
     val showDatePicker = {
         val datePickerDialog = DatePickerDialog(
             context,
             { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
                 calendar.set(year, month, dayOfMonth)
-                selectedDate = dateFormatter.format(calendar.time)
+                selectedDate = calendar.time
             },
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
@@ -187,19 +196,18 @@ fun AddTransactionDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = selectedDate,
+                    value = dateFormatter.format(selectedDate),
                     onValueChange = { },
                     label = { Text("Date") },
-                    modifier = Modifier.fillMaxWidth(),
-                    readOnly = true,
                     trailingIcon = {
                         IconButton(onClick = showDatePicker) {
                             Icon(
-                                Icons.Default.DateRange,
-                                contentDescription = "Select date"
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = null
                             )
                         }
-                    }
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },
@@ -209,11 +217,12 @@ fun AddTransactionDialog(
                     val transaction = Transaction(
                         description = description.ifBlank { "No description" },
                         amount = amount.toDoubleOrNull() ?: 0.0,
-                        date = selectedDate,
+                        date = selectedDate,  // now a proper Date
                         category = category.ifBlank { "General" },
                         type = if (type.equals("income", ignoreCase = true)) "Income" else "Expense"
                     )
                     onAddTransaction(transaction)
+
                 }
             ) {
                 Text("Add")
@@ -233,6 +242,7 @@ fun CategoryDropdown(
     selectedCategory: String,
     onCategorySelected: (String) -> Unit
 ) {
+
     var expanded by remember { mutableStateOf(false) }
 
     OutlinedTextField(
