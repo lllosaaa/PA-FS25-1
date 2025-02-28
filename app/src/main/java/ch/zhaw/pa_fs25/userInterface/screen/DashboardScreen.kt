@@ -47,11 +47,12 @@ fun DashboardScreen(viewModel: TransactionViewModel) {
             Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete Last Transaction")
         }
 
-        LazyColumn(modifier = Modifier.fillMaxSize().padding(top = 48.dp)) {
+        LazyColumn {
             items(transactions) { transaction ->
-                TransactionItem(transaction = transaction)
+                TransactionItem(transaction = transaction, categories = categories)
             }
         }
+
 
         FloatingActionButton(
             onClick = { showDialog = true },
@@ -126,12 +127,17 @@ fun AddCategoryDialog(onDismiss: () -> Unit, onAddCategory: (Category) -> Unit) 
 }
 
 @Composable
-fun TransactionItem(transaction: Transaction) {
+fun TransactionItem(transaction: Transaction, categories: List<Category>) {
     val dateString = remember(transaction.date) {
-        // Or create a static formatter at the top of the file for efficiency
         val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         dateFormatter.format(transaction.date)
     }
+
+    // Find the category name based on the categoryId
+    val categoryName = remember(transaction.categoryId, categories) {
+        categories.find { it.id == transaction.categoryId }?.name ?: "Unknown"
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -144,8 +150,6 @@ fun TransactionItem(transaction: Transaction) {
                     text = transaction.description,
                     style = MaterialTheme.typography.titleSmall
                 )
-
-
                 Text(
                     text = dateString,
                     style = MaterialTheme.typography.bodySmall
@@ -154,8 +158,8 @@ fun TransactionItem(transaction: Transaction) {
             Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
                 Text(
-                    text = transaction.category,
-                    style = MaterialTheme.typography.titleSmall
+                    text = categoryName,
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
             Text(
@@ -258,8 +262,9 @@ fun AddTransactionDialog(
                         description = description.ifBlank { "No description" },
                         amount = amount.toDoubleOrNull() ?: 0.0,
                         date = calendar.time,
-                        category = category.ifBlank { "General" },
-                        type = if (type.equals("income", ignoreCase = true)) "Income" else "Expense"
+                        type = if (type.equals("income", ignoreCase = true)) "Income" else "Expense",
+                        categoryId = categories.indexOf(category) + 1
+
                     )
                     onAddTransaction(transaction)
                 }

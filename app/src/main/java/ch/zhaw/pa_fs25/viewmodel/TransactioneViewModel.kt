@@ -16,7 +16,7 @@ class TransactionViewModel(private val repository: FinanceRepository) : ViewMode
     val transactions: StateFlow<List<Transaction>> = repository.getAllTransactions()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val categories: StateFlow<List<Category>> = repository.getAllCategories()
+    val categories = repository.getAllCategories()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     fun addTransaction(transaction: Transaction) {
@@ -40,7 +40,6 @@ class TransactionViewModel(private val repository: FinanceRepository) : ViewMode
         }
     }
 
-    // ✅ Ensure the Factory class exists
     class Factory(private val repository: FinanceRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(TransactionViewModel::class.java)) {

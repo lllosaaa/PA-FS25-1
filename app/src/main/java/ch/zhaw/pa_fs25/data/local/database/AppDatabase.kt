@@ -11,8 +11,8 @@ import ch.zhaw.pa_fs25.data.local.dao.CategoryDao
 import ch.zhaw.pa_fs25.data.local.dao.TransactionDao
 
 
-@Database(entities = [Transaction::class, Category::class], version = 2, exportSchema = false)
-@TypeConverters(Converters::class) // <-- This correctly registers the converter
+@Database(entities = [Transaction::class, Category::class], version = 3, exportSchema = false)
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun categoryDao(): CategoryDao
