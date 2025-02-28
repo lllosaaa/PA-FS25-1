@@ -5,18 +5,17 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import ch.zhaw.pa_fs25.data.entity.Category
 import ch.zhaw.pa_fs25.data.entity.Transaction
+import ch.zhaw.pa_fs25.data.local.dao.CategoryDao
 import ch.zhaw.pa_fs25.data.local.dao.TransactionDao
 
-@Database(
-    entities = [Transaction::class],
-    version = 1,
-    exportSchema = false
-)
-@TypeConverters(Converters::class) 
-abstract class AppDatabase : RoomDatabase() {
 
+@Database(entities = [Transaction::class, Category::class], version = 2, exportSchema = false)
+@TypeConverters(Converters::class) // <-- This correctly registers the converter
+abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
+    abstract fun categoryDao(): CategoryDao
 
     companion object {
         @Volatile
@@ -29,9 +28,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "budget_database"
                 )
-                    // For a real app with existing data, implement a migration.
-                    // For demo purposes, fallbackToDestructiveMigration will DROP the old table.
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration() // Ensure migrations are handled
                     .build()
                 INSTANCE = instance
                 instance
@@ -39,3 +36,6 @@ abstract class AppDatabase : RoomDatabase() {
         }
     }
 }
+
+
+
