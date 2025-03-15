@@ -3,6 +3,7 @@ package ch.zhaw.pa_fs25.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import ch.zhaw.pa_fs25.data.entity.Category
 import ch.zhaw.pa_fs25.data.entity.Transaction
 import ch.zhaw.pa_fs25.data.repository.FinanceRepository
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,9 +16,18 @@ class TransactionViewModel(private val repository: FinanceRepository) : ViewMode
     val transactions: StateFlow<List<Transaction>> = repository.getAllTransactions()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    val categories = repository.getAllCategories()
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
     fun addTransaction(transaction: Transaction) {
         viewModelScope.launch {
             repository.insertTransaction(transaction)
+        }
+    }
+
+    fun addCategory(category: Category) {
+        viewModelScope.launch {
+            repository.insertCategory(category)
         }
     }
 
@@ -29,20 +39,6 @@ class TransactionViewModel(private val repository: FinanceRepository) : ViewMode
             }
         }
     }
-    fun deleteFirstTransaction() {
-        viewModelScope.launch {
-            val firstTransaction = transactions.value.firstOrNull()
-            if (firstTransaction != null) {
-                repository.deleteTransaction(firstTransaction)
-            }
-        }
-    }
-
-//    fun deleteSelectedTransaction(transaction: Transaction) {
-//        viewModelScope.launch {
-//            repository.deleteTransaction(transaction)
-//        }
-//    }
 
     class Factory(private val repository: FinanceRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

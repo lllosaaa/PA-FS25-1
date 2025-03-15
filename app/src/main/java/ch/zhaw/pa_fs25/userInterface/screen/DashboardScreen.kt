@@ -18,81 +18,126 @@ import ch.zhaw.pa_fs25.viewmodel.TransactionViewModel
 import android.app.DatePickerDialog
 import android.widget.DatePicker
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.ui.res.painterResource
+import ch.zhaw.pa_fs25.R
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import ch.zhaw.pa_fs25.data.entity.Category
+
 
 @Composable
 fun DashboardScreen(viewModel: TransactionViewModel) {
     val transactions by viewModel.transactions.collectAsState()
+    val categories by viewModel.categories.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
+    var showCategoryDialog by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp) // optional padding around the content
+            .padding(16.dp)
     ) {
-        // Top text label
-        Text(
-            text = "Recent Transactions",
-            style = MaterialTheme.typography.titleLarge
-        )
+        Text(text = "Recent Transactions", style = MaterialTheme.typography.titleLarge)
 
-        // DELETE button in top-right corner
         IconButton(
-            onClick = { viewModel.deleteFirstTransaction() },
+            onClick = { viewModel.deleteLastTransaction() },
             modifier = Modifier.align(Alignment.TopEnd)
         ) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Delete First Transaction"
-            )
+            Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete Last Transaction")
         }
 
-        // List of transactions
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 48.dp) // leave space for the top row
-        ) {
+        LazyColumn {
             items(transactions) { transaction ->
-                TransactionItem(transaction = transaction)
+                TransactionItem(transaction = transaction, categories = categories)
             }
         }
 
-        // Floating Add button in bottom-center
+
         FloatingActionButton(
             onClick = { showDialog = true },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 1.dp) // adjust if needed to avoid bottom nav overlap
+            modifier = Modifier.align(Alignment.BottomCenter)
         ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Add Transaction"
-            )
+            Icon(imageVector = Icons.Default.Add, contentDescription = "Add Transaction")
+        }
+
+        FloatingActionButton(
+            onClick = { showCategoryDialog = true },
+            modifier = Modifier.align(Alignment.BottomEnd)
+        ) {
+            //use painterResource(id = R.drawable.category_24px.xml) instead of Icons.Default.Add
+            Icon(painter = painterResource(id = R.drawable.category_24px), contentDescription = "Add Category")
         }
     }
 
-    // Show dialog for new transactions
     if (showDialog) {
         AddTransactionDialog(
             onDismiss = { showDialog = false },
             onAddTransaction = { transaction ->
                 viewModel.addTransaction(transaction)
                 showDialog = false
+            },
+            categories = categories.map { it.name }
+        )
+    }
+
+
+    if (showCategoryDialog) {
+        AddCategoryDialog(
+            onDismiss = { showCategoryDialog = false },
+            onAddCategory = { category ->
+                viewModel.addCategory(category)
+                showCategoryDialog = false
             }
         )
     }
 }
 
 @Composable
-fun TransactionItem(transaction: Transaction) {
+fun AddCategoryDialog(onDismiss: () -> Unit, onAddCategory: (Category) -> Unit) {
+    var categoryName by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add Category") },
+        text = {
+            OutlinedTextField(
+                value = categoryName,
+                onValueChange = { categoryName = it },
+                label = { Text("Category Name") },
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val category = Category(name = categoryName.ifBlank { "Uncategorized" })
+                    onAddCategory(category)
+                }
+            ) {
+                Text("Add")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun TransactionItem(transaction: Transaction, categories: List<Category>) {
     val dateString = remember(transaction.date) {
-        // Or create a static formatter at the top of the file for efficiency
         val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         dateFormatter.format(transaction.date)
     }
+
+    // Find the category name based on the categoryId
+    val categoryName = remember(transaction.categoryId, categories) {
+        categories.find { it.id == transaction.categoryId }?.name ?: "Unknown"
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -105,8 +150,6 @@ fun TransactionItem(transaction: Transaction) {
                     text = transaction.description,
                     style = MaterialTheme.typography.titleSmall
                 )
-
-
                 Text(
                     text = dateString,
                     style = MaterialTheme.typography.bodySmall
@@ -115,8 +158,8 @@ fun TransactionItem(transaction: Transaction) {
             Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
                 Text(
-                    text = transaction.category,
-                    style = MaterialTheme.typography.titleSmall
+                    text = categoryName,
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
             Text(
@@ -128,10 +171,12 @@ fun TransactionItem(transaction: Transaction) {
     }
 }
 
+
 @Composable
 fun AddTransactionDialog(
     onDismiss: () -> Unit,
-    onAddTransaction: (Transaction) -> Unit
+    onAddTransaction: (Transaction) -> Unit,
+    categories: List<String> // <-- Accept categories as a parameter
 ) {
     var description by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
@@ -140,17 +185,15 @@ fun AddTransactionDialog(
 
     val context = LocalContext.current
     val calendar = remember { Calendar.getInstance() }
-// Store a Date, not a String
-    var selectedDate by remember { mutableStateOf(calendar.time) }
-
     val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+    var selectedDate by remember { mutableStateOf(dateFormatter.format(calendar.time)) }
 
     val showDatePicker = {
         val datePickerDialog = DatePickerDialog(
             context,
             { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
                 calendar.set(year, month, dayOfMonth)
-                selectedDate = calendar.time
+                selectedDate = dateFormatter.format(calendar.time)
             },
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
@@ -181,7 +224,7 @@ fun AddTransactionDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 CategoryDropdown(
-                    categories = listOf("Groceries", "Food", "Transport", "Bills", "Entertainment"),
+                    categories = categories, // <-- Use the provided categories list
                     selectedCategory = category,
                     onCategorySelected = { newCategory -> category = newCategory }
                 )
@@ -196,18 +239,19 @@ fun AddTransactionDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = dateFormatter.format(selectedDate),
+                    value = selectedDate,
                     onValueChange = { },
                     label = { Text("Date") },
+                    modifier = Modifier.fillMaxWidth(),
+                    readOnly = true,
                     trailingIcon = {
                         IconButton(onClick = showDatePicker) {
                             Icon(
-                                imageVector = Icons.Default.DateRange,
-                                contentDescription = null
+                                Icons.Default.DateRange,
+                                contentDescription = "Select date"
                             )
                         }
-                    },
-                    modifier = Modifier.fillMaxWidth()
+                    }
                 )
             }
         },
@@ -217,12 +261,12 @@ fun AddTransactionDialog(
                     val transaction = Transaction(
                         description = description.ifBlank { "No description" },
                         amount = amount.toDoubleOrNull() ?: 0.0,
-                        date = selectedDate,  // now a proper Date
-                        category = category.ifBlank { "General" },
-                        type = if (type.equals("income", ignoreCase = true)) "Income" else "Expense"
+                        date = calendar.time,
+                        type = if (type.equals("income", ignoreCase = true)) "Income" else "Expense",
+                        categoryId = categories.indexOf(category) + 1
+
                     )
                     onAddTransaction(transaction)
-
                 }
             ) {
                 Text("Add")
@@ -235,6 +279,7 @@ fun AddTransactionDialog(
         }
     )
 }
+
 
 @Composable
 fun CategoryDropdown(

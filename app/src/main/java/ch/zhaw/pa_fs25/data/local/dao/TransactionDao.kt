@@ -51,6 +51,11 @@ interface TransactionDao {
     fun getTransactionsByDate(startDate: Date, endDate: Date): Flow<List<Transaction>>
 
     /**
+     * Retrieve transactions by category, ordered by date descending.
+     */
+    @Query("SELECT * FROM transactions WHERE categoryId = :categoryId ORDER BY date DESC")
+    fun getTransactionsByCategory(categoryId: Int): Flow<List<Transaction>>
+    /**
      * Get total expenses (sum of all negative amounts).
      */
     @Query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE amount < 0")

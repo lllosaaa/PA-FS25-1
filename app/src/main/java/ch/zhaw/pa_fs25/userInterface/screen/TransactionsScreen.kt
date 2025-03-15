@@ -14,8 +14,8 @@ import ch.zhaw.pa_fs25.viewmodel.TransactionViewModel
 
 @Composable
 fun TransactionsScreen(viewModel: TransactionViewModel) {
-    // If you want to show all transactions here as well, you can reuse the same list:
     val transactions by viewModel.transactions.collectAsState()
+    val categories by viewModel.categories.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
@@ -24,7 +24,10 @@ fun TransactionsScreen(viewModel: TransactionViewModel) {
         )
         LazyColumn {
             items(transactions) { transaction ->
-                TransactionItem(transaction = transaction)
+                TransactionItem(
+                    transaction = transaction,
+                    categories = categories
+                )
             }
         }
     }
