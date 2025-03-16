@@ -95,5 +95,9 @@ dependencies {
     implementation(libs.androidx.room.ktx)
 
     //navigation
-    implementation("androidx.navigation:navigation-compose:2.5.3")
+    implementation(libs.androidx.navigation.compose)
+
+    //opneCSV
+    implementation("com.opencsv:opencsv:5.6")
+
 }

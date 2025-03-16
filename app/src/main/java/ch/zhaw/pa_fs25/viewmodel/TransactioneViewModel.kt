@@ -40,6 +40,13 @@ class TransactionViewModel(private val repository: FinanceRepository) : ViewMode
         }
     }
 
+    fun deleteAllTransactions() {
+        viewModelScope.launch {
+            repository.deleteAllTransactions()
+        }
+
+    }
+
     class Factory(private val repository: FinanceRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(TransactionViewModel::class.java)) {

@@ -25,4 +25,8 @@ class FinanceRepository(
     suspend fun deleteTransaction(lastTransaction: Transaction) {
         transactionDao.deleteTransaction(lastTransaction)
     }
+
+    suspend fun deleteAllTransactions() {
+        transactionDao.deleteAllTransactions()
+    }
 }
