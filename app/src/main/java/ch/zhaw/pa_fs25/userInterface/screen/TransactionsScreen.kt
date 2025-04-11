@@ -35,7 +35,7 @@ fun TransactionsScreen(viewModel: TransactionViewModel) {
                 val defaultCategory = categories.firstOrNull()
                 val parser = CsvTransactionParser()
                 val importedTransactions: List<Transaction> =
-                    parser.parse(context, fileUri, defaultCategory)
+                    parser.parse(context, fileUri, categories, defaultCategory)
 
                 if (importedTransactions.isEmpty()) {
                     Toast.makeText(

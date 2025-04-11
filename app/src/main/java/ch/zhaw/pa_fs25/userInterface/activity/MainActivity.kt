@@ -23,6 +23,9 @@ import ch.zhaw.pa_fs25.userInterface.screen.TransactionsScreen
 import ch.zhaw.pa_fs25.viewmodel.TransactionViewModel
 import androidx.compose.ui.res.painterResource
 import ch.zhaw.pa_fs25.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,6 +40,10 @@ class MainActivity : ComponentActivity() {
 
         // ViewModel factory
         val viewModelFactory = TransactionViewModel.Factory(repository)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            repository.insertDefaultCategoriesIfMissing()
+        }
 
         setContent {
             // Grab the TransactionViewModel
@@ -131,7 +138,7 @@ fun MainScreen(viewModel: TransactionViewModel, repository: FinanceRepository) {
                 TransactionsScreen(viewModel)
             }
             composable("budget") {
-                BudgetScreen()
+                BudgetScreen(viewModel)
             }
             composable("settings") {
                 SettingsScreen(repository)

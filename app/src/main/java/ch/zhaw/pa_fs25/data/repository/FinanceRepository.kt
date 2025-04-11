@@ -29,4 +29,39 @@ class FinanceRepository(
     suspend fun deleteAllTransactions() {
         transactionDao.deleteAllTransactions()
     }
+
+    suspend fun insertDefaultCategoriesIfMissing() {
+        val defaultCategories = listOf(
+            "Groceries",
+            "Transportation",
+            "Dining Out",
+            "Health",
+            "Entertainment",
+            "Education",
+            "Clothing",
+            "Utilities",
+            "Insurance",
+            "Travel",
+            "Gifts",
+            "Electronics",
+            "Crypto/Exchange",
+            "Miscellaneous"
+        )
+
+        for (name in defaultCategories) {
+            if (categoryDao.countByName(name) == 0) {
+                categoryDao.insertCategory(Category(name = name))
+            }
+        }
+    }
+    suspend fun deleteCategoryIfUnused(category: Category): Boolean {
+        val count = categoryDao.countTransactionsWithCategory(category.id)
+        return if (count == 0) {
+            categoryDao.deleteCategory(category)
+            true
+        } else {
+            false // Cannot delete if it's in use
+        }
+    }
+
 }
