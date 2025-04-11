@@ -26,4 +26,12 @@ interface CategoryDao {
     @Query("SELECT COUNT(*) FROM transactions WHERE categoryId = :categoryId")
     suspend fun countTransactionsWithCategory(categoryId: Int): Int
 
+    @Query("UPDATE categories SET budgetLimit = :newLimit WHERE id = :categoryId")
+    suspend fun updateBudgetLimit(categoryId: Int, newLimit: Double)
+
+    @Query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE categoryId = :categoryId AND amount < 0")
+    suspend fun getSpentForCategory(categoryId: Int): Double
+
+
+
 }
