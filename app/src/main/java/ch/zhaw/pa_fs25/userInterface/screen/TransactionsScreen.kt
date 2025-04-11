@@ -67,25 +67,28 @@ fun TransactionsScreen(viewModel: TransactionViewModel) {
             style = MaterialTheme.typography.titleLarge
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = {
-            // Launch file picker with "*/*" to ensure CSV files appear.
-            csvLauncher.launch("*/*")
-        }) {
-            Text(text = "Import CSV")
-        }
-        //Delete all transaction button
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = {
-            viewModel.deleteAllTransactions()
-        }) {
-            Text(text = "Delete all transactions")
+        Row {
+            Button(onClick = {
+                // Launch file picker with "*/*" to ensure CSV files appear.
+                csvLauncher.launch("*/*")
+            }) {
+                Text(text = "Import CSV")
+            }
+            //Delete all transaction button
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(onClick = {
+                viewModel.deleteAllTransactions()
+            }) {
+                Text(text = "Delete all transactions")
+            }
+
         }
         Spacer(modifier = Modifier.height(16.dp))
         LazyColumn {
             items(transactions) { transaction ->
                 TransactionItem(
                     transaction = transaction,
-                    categories = categories
+                    categories = categories,
                 )
             }
         }

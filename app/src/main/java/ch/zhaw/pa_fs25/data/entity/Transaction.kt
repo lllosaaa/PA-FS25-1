@@ -22,7 +22,7 @@ data class Transaction(
     val description: String,
     val amount: Double,
     val date: Date,
-    val categoryId: Int, // Now references the `id` in categories
+    val categoryId: Int,
     val type: String
 )
 

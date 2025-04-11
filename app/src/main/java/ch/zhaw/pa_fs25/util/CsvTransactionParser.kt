@@ -10,13 +10,8 @@ import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-/**
- * Interface for parsing transaction files (CSV, MT940, etc.).
- */
+
 interface TransactionParser {
-    /**
-     * Parse the file at [uri] and return a list of Transaction objects.
-     */
     suspend fun parse(context: Context, uri: Uri, defaultCategory: Category?): List<Transaction>
 }
 
@@ -33,14 +28,9 @@ interface TransactionParser {
  *   8: State
  *   9: Balance
  *
- * This example uses the "Completed Date" (index 3) as the date,
- * the "Description" (index 4) for the transaction description,
- * the "Amount" (index 5) for the amount,
- * and the "Type" (index 0) for the transaction type.
  */
 class CsvTransactionParser : TransactionParser {
 
-    // Adjust this to match the actual date format in your CSV (e.g. "yyyy-MM-dd", "yyyy-MM-dd HH:mm:ss", etc.)
     private val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
     override suspend fun parse(context: Context, uri: Uri, defaultCategory: Category?): List<Transaction> {
@@ -60,13 +50,18 @@ class CsvTransactionParser : TransactionParser {
                 }
 
                 dataRows.forEach { row ->
-                    // We expect at least 6 columns to parse date, description, amount, and type
+                    // Expect at least 6 columns to parse date, description, amount, and type
                     if (row.size >= 6) {
                         try {
                             val completedDate = row[3].trim()
                             val date = dateFormatter.parse(completedDate)
                             val description = row[4].trim()
                             val amountStr = row[5].trim()
+                            if(amountStr < "0"){
+                                row[0] = "Expense"
+                            }else{
+                                row[0] = "Income"
+                            }
                             val type = row[0].trim()
 
                             if (date != null && amountStr.isNotEmpty()) {
@@ -77,7 +72,7 @@ class CsvTransactionParser : TransactionParser {
                                     amount = amount,
                                     date = date,
                                     categoryId = categoryId,
-                                    type = type // Or transform this string into "Income"/"Expense" if needed
+                                    type = type
                                 )
                                 transactions.add(transaction)
                             } else {
