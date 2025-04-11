@@ -66,4 +66,8 @@ interface TransactionDao {
      */
     @Query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE amount > 0")
     fun getTotalIncome(): Flow<Double>
+
+    @Query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE categoryId = :categoryId AND amount < 0")
+    suspend fun getSpentForCategory(categoryId: Int): Double
+
 }

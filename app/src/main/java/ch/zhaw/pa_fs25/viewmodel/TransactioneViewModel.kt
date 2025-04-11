@@ -54,6 +54,17 @@ class TransactionViewModel(private val repository: FinanceRepository) : ViewMode
         }
     }
 
+    fun updateCategoryBudget(categoryId: Int, newLimit: Double) {
+        viewModelScope.launch {
+            repository.updateBudgetLimit(categoryId, newLimit)
+        }
+    }
+
+    suspend fun getSpentForCategory(categoryId: Int): Double {
+        return repository.getSpentForCategory(categoryId)
+    }
+
+
 
     class Factory(private val repository: FinanceRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

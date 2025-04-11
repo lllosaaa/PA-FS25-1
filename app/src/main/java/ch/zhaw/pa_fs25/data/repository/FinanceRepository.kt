@@ -64,4 +64,13 @@ class FinanceRepository(
         }
     }
 
+    suspend fun updateBudgetLimit(categoryId: Int, newLimit: Double) {
+        categoryDao.updateBudgetLimit(categoryId, newLimit)
+    }
+
+    suspend fun getSpentForCategory(categoryId: Int): Double {
+        return categoryDao.getSpentForCategory(categoryId)
+    }
+
+
 }
