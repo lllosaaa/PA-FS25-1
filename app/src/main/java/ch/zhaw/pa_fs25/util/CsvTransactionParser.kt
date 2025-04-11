@@ -11,9 +11,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import ch.zhaw.pa_fs25.util.TransactionsCategorizer
 
-interface TransactionParser {
-    suspend fun parse(context: Context, uri: Uri, categories: List<Category>, defaultCategory: Category?): List<Transaction>
-}
 
 class CsvTransactionParser : TransactionParser {
 
