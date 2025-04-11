@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import ch.zhaw.pa_fs25.data.entity.Category
+import kotlin.reflect.typeOf
 
 
 @Composable
@@ -135,7 +136,14 @@ fun TransactionItem(transaction: Transaction, categories: List<Category>) {
 
     // Find the category name based on the categoryId
     val categoryName = remember(transaction.categoryId, categories) {
-        categories.find { it.id == transaction.categoryId }?.name ?: "Unknown"
+        categories.find { it.id == transaction.categoryId }?.name ?: "General"
+    }
+    val type = remember(transaction.type){
+        if(transaction.type.equals("Income", ignoreCase = true)){
+            "Income"
+        }else{
+            "Expense"
+        }
     }
 
     Card(
@@ -160,6 +168,11 @@ fun TransactionItem(transaction: Transaction, categories: List<Category>) {
                 Text(
                     text = categoryName,
                     style = MaterialTheme.typography.bodySmall
+                )
+                Text(
+                    text= type,
+                    style = MaterialTheme.typography.bodySmall
+
                 )
             }
             Text(

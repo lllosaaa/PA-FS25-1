@@ -2,8 +2,9 @@ package ch.zhaw.pa_fs25.data.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.Index
 
-@Entity(tableName = "categories")
+@Entity(tableName = "categories",indices = [Index(value = ["name"], unique = true)])
 data class Category(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,

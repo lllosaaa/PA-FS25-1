@@ -5,10 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -27,7 +23,9 @@ import ch.zhaw.pa_fs25.userInterface.screen.TransactionsScreen
 import ch.zhaw.pa_fs25.viewmodel.TransactionViewModel
 import androidx.compose.ui.res.painterResource
 import ch.zhaw.pa_fs25.R
-import java.util.Locale
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,19 +41,26 @@ class MainActivity : ComponentActivity() {
         // ViewModel factory
         val viewModelFactory = TransactionViewModel.Factory(repository)
 
+        CoroutineScope(Dispatchers.IO).launch {
+            repository.insertDefaultCategoriesIfMissing()
+        }
+
         setContent {
             // Grab the TransactionViewModel
             val transactionViewModel: TransactionViewModel = viewModel(factory = viewModelFactory)
 
             // Show our main screen with bottom nav
-            MainScreen(transactionViewModel)
+            MainScreen(
+                transactionViewModel,
+                repository = repository
+            )
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(viewModel: TransactionViewModel) {
+fun MainScreen(viewModel: TransactionViewModel, repository: FinanceRepository) {
     val navController = rememberNavController()
 
     // Bottom nav items: route, icon, label
@@ -133,10 +138,10 @@ fun MainScreen(viewModel: TransactionViewModel) {
                 TransactionsScreen(viewModel)
             }
             composable("budget") {
-                BudgetScreen()
+                BudgetScreen(viewModel)
             }
             composable("settings") {
-                SettingsScreen()
+                SettingsScreen(repository)
             }
         }
     }
