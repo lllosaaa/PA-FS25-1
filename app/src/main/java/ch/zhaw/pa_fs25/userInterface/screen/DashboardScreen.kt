@@ -1,30 +1,57 @@
 package ch.zhaw.pa_fs25.userInterface.screen
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import android.app.DatePickerDialog
+import android.widget.DatePicker
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import ch.zhaw.pa_fs25.data.entity.Transaction
-import ch.zhaw.pa_fs25.viewmodel.TransactionViewModel
-import android.app.DatePickerDialog
-import android.widget.DatePicker
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import ch.zhaw.pa_fs25.R
+import ch.zhaw.pa_fs25.data.entity.Category
+import ch.zhaw.pa_fs25.data.entity.Transaction
+import ch.zhaw.pa_fs25.userInterface.component.CategoryBudgetChart
+import ch.zhaw.pa_fs25.viewmodel.TransactionViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import ch.zhaw.pa_fs25.data.entity.Category
-import kotlin.reflect.typeOf
 
 
 @Composable
@@ -34,27 +61,21 @@ fun DashboardScreen(viewModel: TransactionViewModel) {
     var showDialog by remember { mutableStateOf(false) }
     var showCategoryDialog by remember { mutableStateOf(false) }
 
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(text = "Recent Transactions", style = MaterialTheme.typography.titleLarge)
+        Column {
 
-        IconButton(
-            onClick = { viewModel.deleteLastTransaction() },
-            modifier = Modifier.align(Alignment.TopEnd)
-        ) {
-            Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete Last Transaction")
+            Text(text = "Recent Transactions", style = MaterialTheme.typography.titleLarge)
+
+            CategoryBudgetOverview(
+                categories = categories,
+                transactions = transactions
+            )
         }
-
-        LazyColumn {
-            items(transactions) { transaction ->
-                TransactionItem(transaction = transaction, categories = categories)
-            }
-        }
-
-
         FloatingActionButton(
             onClick = { showDialog = true },
             modifier = Modifier.align(Alignment.BottomCenter)
@@ -66,33 +87,60 @@ fun DashboardScreen(viewModel: TransactionViewModel) {
             onClick = { showCategoryDialog = true },
             modifier = Modifier.align(Alignment.BottomEnd)
         ) {
-            //use painterResource(id = R.drawable.category_24px.xml) instead of Icons.Default.Add
+
             Icon(painter = painterResource(id = R.drawable.category_24px), contentDescription = "Add Category")
+        }
+
+        if (showDialog) {
+            AddTransactionDialog(
+                onDismiss = { showDialog = false },
+                onAddTransaction = { transaction ->
+                    viewModel.addTransaction(transaction)
+                    showDialog = false
+                },
+                categories = categories.map { it.name }
+            )
+        }
+
+
+        if (showCategoryDialog) {
+            AddCategoryDialog(
+                onDismiss = { showCategoryDialog = false },
+                onAddCategory = { category ->
+                    viewModel.addCategory(category)
+                    showCategoryDialog = false
+                }
+            )
         }
     }
 
-    if (showDialog) {
-        AddTransactionDialog(
-            onDismiss = { showDialog = false },
-            onAddTransaction = { transaction ->
-                viewModel.addTransaction(transaction)
-                showDialog = false
-            },
-            categories = categories.map { it.name }
-        )
-    }
+}
+@Composable
+fun CategoryBudgetOverview(
+    categories: List<Category>,
+    transactions: List<Transaction>
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 160.dp),
+        contentPadding = PaddingValues(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(categories.filter { it.budgetLimit > 0 }) { category ->
+            val spent = transactions
+                .filter { it.categoryId == category.id && it.amount < 0 }
+                .sumOf { it.amount }
 
-
-    if (showCategoryDialog) {
-        AddCategoryDialog(
-            onDismiss = { showCategoryDialog = false },
-            onAddCategory = { category ->
-                viewModel.addCategory(category)
-                showCategoryDialog = false
-            }
-        )
+            CategoryBudgetChart(
+                categoryName = category.name,
+                budgetLimit = category.budgetLimit,
+                spentAmount = spent
+            )
+        }
     }
 }
+
+
 
 @Composable
 fun AddCategoryDialog(onDismiss: () -> Unit, onAddCategory: (Category) -> Unit) {
