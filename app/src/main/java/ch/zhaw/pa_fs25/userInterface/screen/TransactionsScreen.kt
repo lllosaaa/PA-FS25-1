@@ -19,6 +19,7 @@ import ch.zhaw.pa_fs25.viewmodel.TransactionViewModel
 import ch.zhaw.pa_fs25.data.parser.CsvTransactionParser
 import kotlinx.coroutines.launch
 
+
 @Composable
 fun TransactionsScreen(viewModel: TransactionViewModel) {
     val transactions by viewModel.transactions.collectAsState()
