@@ -69,7 +69,7 @@ fun DashboardScreen(viewModel: TransactionViewModel) {
     ) {
         Column {
 
-            Text(text = "Recent Transactions", style = MaterialTheme.typography.titleLarge)
+            Text(text = "Budget Overview", style = MaterialTheme.typography.titleLarge)
 
             CategoryBudgetOverview(
                 categories = categories,
