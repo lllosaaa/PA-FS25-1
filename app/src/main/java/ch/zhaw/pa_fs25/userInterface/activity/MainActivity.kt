@@ -35,7 +35,8 @@ class MainActivity : ComponentActivity() {
         val database = AppDatabase.getDatabase(this)
         val repository = FinanceRepository(
             database.transactionDao(),
-            categoryDao = database.categoryDao()
+            categoryDao = database.categoryDao(),
+            budgetDao = database.budgetDao()
         )
 
         // ViewModel factory
