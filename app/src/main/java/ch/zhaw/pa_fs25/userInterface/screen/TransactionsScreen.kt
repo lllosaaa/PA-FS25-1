@@ -7,6 +7,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -29,13 +31,19 @@ fun TransactionsScreen(viewModel: TransactionViewModel) {
     val sdf = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
     var searchText by remember { mutableStateOf("") }
+    var selectedMonth by remember { mutableStateOf(-1) }
+    var selectedYear by remember { mutableStateOf(-1) }
 
     val filteredTransactions = transactions.filter { tx ->
+        val cal = Calendar.getInstance().apply { time = tx.date }
         val matchCategory = categories.find { it.id == tx.categoryId }?.name?.contains(searchText, true) ?: false
         val matchDate = sdf.format(tx.date).contains(searchText, true)
         val matchAmount = tx.amount.toString().contains(searchText, true)
         val matchDescription = tx.description.contains(searchText, true)
-        searchText.isBlank() || matchCategory || matchDate || matchAmount || matchDescription
+        val matchMonth = selectedMonth == -1 || cal.get(Calendar.MONTH) == selectedMonth
+        val matchYear = selectedYear == -1 || cal.get(Calendar.YEAR) == selectedYear
+
+        (searchText.isBlank() || matchCategory || matchDate || matchAmount || matchDescription) && matchMonth && matchYear
     }
 
     val csvLauncher = rememberLauncherForActivityResult(
@@ -82,6 +90,26 @@ fun TransactionsScreen(viewModel: TransactionViewModel) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            DropdownMenuSelector(
+                label = "Month",
+                options = listOf("All") + (0..11).map { month ->
+                    SimpleDateFormat("MMMM", Locale.getDefault()).format(Calendar.getInstance().apply { set(Calendar.MONTH, month) }.time)
+                },
+                selectedIndex = if (selectedMonth == -1) 0 else selectedMonth + 1,
+                onSelectIndex = { selectedMonth = it - 1 }
+            )
+
+            DropdownMenuSelector(
+                label = "Year",
+                options = listOf("All") + (2020..Calendar.getInstance().get(Calendar.YEAR)).map { it.toString() },
+                selectedIndex = if (selectedYear == -1) 0 else (selectedYear - 2019),
+                onSelectIndex = { selectedYear = if (it == 0) -1 else 2019 + it }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         Row {
             Button(onClick = {
                 csvLauncher.launch("*/*")
@@ -105,6 +133,39 @@ fun TransactionsScreen(viewModel: TransactionViewModel) {
                 TransactionItem(
                     transaction = transaction,
                     categories = categories,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun DropdownMenuSelector(label: String, options: List<String>, selectedIndex: Int, onSelectIndex: (Int) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        OutlinedTextField(
+            value = options[selectedIndex],
+            onValueChange = {},
+            modifier = Modifier.width(150.dp),
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = {
+                IconButton(onClick = { expanded = true }) {
+                    Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                }
+            }
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            options.forEachIndexed { index, option ->
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        onSelectIndex(index)
+                        expanded = false
+                    }
                 )
             }
         }
