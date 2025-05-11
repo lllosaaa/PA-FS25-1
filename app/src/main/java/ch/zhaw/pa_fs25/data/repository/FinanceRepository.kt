@@ -1,14 +1,18 @@
 package ch.zhaw.pa_fs25.data.repository
 
+import ch.zhaw.pa_fs25.data.entity.Budget
 import ch.zhaw.pa_fs25.data.entity.Category
 import ch.zhaw.pa_fs25.data.entity.Transaction
+import ch.zhaw.pa_fs25.data.local.dao.BudgetDao
 import ch.zhaw.pa_fs25.data.local.dao.CategoryDao
 import ch.zhaw.pa_fs25.data.local.dao.TransactionDao
 import kotlinx.coroutines.flow.Flow
 
 class FinanceRepository(
     private val transactionDao: TransactionDao,
-    private val categoryDao: CategoryDao // New DAO
+    private val categoryDao: CategoryDao,
+    private val budgetDao: BudgetDao
+
 ) {
     fun getAllTransactions(): Flow<List<Transaction>> = transactionDao.getAllTransactions()
 
@@ -71,6 +75,24 @@ class FinanceRepository(
     suspend fun getSpentForCategory(categoryId: Int): Double {
         return categoryDao.getSpentForCategory(categoryId)
     }
+
+    suspend fun getBudgetForCategory(categoryId: Int, month: Int, year: Int): Double {
+        return budgetDao.getBudgetForCategory(categoryId, month, year)?.limitAmount ?: 0.0
+    }
+
+    suspend fun setBudgetForCategory(categoryId: Int, month: Int, year: Int, amount: Double) {
+        budgetDao.insertBudget(Budget(categoryId = categoryId, month = month, year = year, limitAmount = amount))
+    }
+
+    suspend fun getBudgetsForMonth(month: Int, year: Int): List<Budget> {
+        return budgetDao.getBudgetsForMonth(month, year)
+    }
+
+    suspend fun deleteBudget(categoryId: Int, month: Int, year: Int) {
+        budgetDao.deleteBudget(categoryId, month, year)
+    }
+
+
 
 
 }
