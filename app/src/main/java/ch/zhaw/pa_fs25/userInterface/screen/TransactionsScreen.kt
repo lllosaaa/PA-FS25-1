@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import ch.zhaw.pa_fs25.data.entity.Transaction
 import ch.zhaw.pa_fs25.data.parser.UniversalTransactionParser
 import ch.zhaw.pa_fs25.viewmodel.TransactionViewModel
+import ch.zhaw.pa_fs25.di.NetworkModule
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -76,6 +77,8 @@ fun TransactionsScreen(viewModel: TransactionViewModel) {
         }
     }
 
+    val swissApi = remember { NetworkModule.provideSwissNextGenApi() }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -110,14 +113,20 @@ fun TransactionsScreen(viewModel: TransactionViewModel) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Row {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = {
                 csvLauncher.launch("*/*")
             }) {
                 Text(text = "Import CSV")
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Button(onClick = {
+                viewModel.importSwissMockTransactions(swissApi) {
+                    Toast.makeText(context, "Imported $it transactions from API", Toast.LENGTH_SHORT).show()
+                }
+            }) {
+                Text("Import API")
+            }
 
             Button(onClick = {
                 viewModel.deleteAllTransactions()
@@ -144,7 +153,7 @@ fun DropdownMenuSelector(label: String, options: List<String>, selectedIndex: In
     var expanded by remember { mutableStateOf(false) }
     Box {
         OutlinedTextField(
-            value = options[selectedIndex],
+            value = options.getOrElse(selectedIndex) { "" },
             onValueChange = {},
             modifier = Modifier.width(150.dp),
             readOnly = true,

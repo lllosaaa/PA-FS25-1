@@ -6,7 +6,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import ch.zhaw.pa_fs25.data.entity.Category
 import ch.zhaw.pa_fs25.data.entity.Transaction
+import ch.zhaw.pa_fs25.data.remote.SwissNextGenApi
 import ch.zhaw.pa_fs25.data.repository.FinanceRepository
+import ch.zhaw.pa_fs25.util.SwissTransactionMapper
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
@@ -101,6 +103,40 @@ class TransactionViewModel(private val repository: FinanceRepository) : ViewMode
     suspend fun getSpentForCategory(categoryId: Int): Double {
         return repository.getSpentForCategory(categoryId)
     }
+
+    fun importSwissMockTransactions(api: SwissNextGenApi, onResult: (Int) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val accounts = api.getAccounts().accounts
+                val firstAccount = accounts.firstOrNull() ?: return@launch
+
+                // ✅ Use href exactly as provided by the mock server
+                val rawHref = firstAccount._links.transactions.href
+                val fullUrl = "http://10.0.2.2:3000$rawHref"
+
+                val txResponse = api.getTransactionsByUrl(fullUrl)
+
+                val categoryList = categories.value
+                val defaultCategoryId = categoryList.firstOrNull()?.id ?: 1
+
+                val converted = txResponse.transactions.booked.map {
+                    val description = it.remittanceInformationUnstructured ?: it.creditorName ?: "No description"
+                    val transaction = SwissTransactionMapper.map(it, categoryList, defaultCategoryId)
+                    transaction.copy(
+                        categoryId = SwissTransactionMapper.detectCategoryId(description, categoryList, defaultCategoryId)
+                    )
+                }
+
+                converted.forEach { addTransaction(it) }
+                onResult(converted.size)
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onResult(0)
+            }
+        }
+    }
+
 
     class Factory(private val repository: FinanceRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
