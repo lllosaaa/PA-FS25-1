@@ -9,6 +9,7 @@ import ch.zhaw.pa_fs25.data.entity.Transaction
 import ch.zhaw.pa_fs25.data.remote.SwissNextGenApi
 import ch.zhaw.pa_fs25.data.repository.FinanceRepository
 import ch.zhaw.pa_fs25.util.SwissTransactionMapper
+import ch.zhaw.pa_fs25.util.TransactionsCategorizer
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
@@ -61,6 +62,7 @@ class TransactionViewModel(private val repository: FinanceRepository) : ViewMode
     }
 
     fun addTransaction(transaction: Transaction) {
+        println("✅ Inserting transaction: $transaction")
         viewModelScope.launch {
             repository.insertTransaction(transaction)
         }
@@ -108,27 +110,40 @@ class TransactionViewModel(private val repository: FinanceRepository) : ViewMode
         viewModelScope.launch {
             try {
                 val accounts = api.getAccounts().accounts
-                val firstAccount = accounts.firstOrNull() ?: return@launch
+                val firstAccount = accounts.firstOrNull()
+                if (firstAccount == null) {
+                    onResult(0)
+                    return@launch
+                }
 
-                // ✅ Use href exactly as provided by the mock server
                 val rawHref = firstAccount._links.transactions.href
                 val fullUrl = "http://10.0.2.2:3000$rawHref"
-
                 val txResponse = api.getTransactionsByUrl(fullUrl)
 
-                val categoryList = categories.value
+                // 💡 Wait for categories to load before proceeding
+                val categoryList = categories.first()
                 val defaultCategoryId = categoryList.firstOrNull()?.id ?: 1
 
                 val converted = txResponse.transactions.booked.map {
                     val description = it.remittanceInformationUnstructured ?: it.creditorName ?: "No description"
                     val transaction = SwissTransactionMapper.map(it, categoryList, defaultCategoryId)
                     transaction.copy(
-                        categoryId = SwissTransactionMapper.detectCategoryId(description, categoryList, defaultCategoryId)
+                        categoryId = TransactionsCategorizer.detectCategoryId(
+                            description,
+                            categoryList,
+                            defaultCategoryId
+                        ),
                     )
                 }
 
-                converted.forEach { addTransaction(it) }
-                onResult(converted.size)
+                if (converted.isEmpty()) {
+                    onResult(0)
+                } else {
+                    converted.forEach { transaction ->
+                        addTransaction(transaction)
+                    }
+                    onResult(converted.size)
+                }
 
             } catch (e: Exception) {
                 e.printStackTrace()

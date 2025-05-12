@@ -1,4 +1,5 @@
 package ch.zhaw.pa_fs25.util
+
 import ch.zhaw.pa_fs25.data.entity.Transaction
 import ch.zhaw.pa_fs25.data.entity.Category
 import ch.zhaw.pa_fs25.data.model.SwissTransaction
@@ -9,29 +10,15 @@ object SwissTransactionMapper {
     private val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
     fun map(tx: SwissTransaction, categories: List<Category>, defaultCategoryId: Int): Transaction {
+        val description = tx.remittanceInformationUnstructured ?: tx.creditorName ?: "No description"
+        val amount = tx.amount.amount.toDoubleOrNull() ?: 0.0
+
         return Transaction(
-            description = tx.remittanceInformationUnstructured ?: tx.creditorName ?: "No description",
-            amount = tx.amount.amount.toDoubleOrNull() ?: 0.0,
+            description = description,
+            amount = amount,
             date = sdf.parse(tx.bookingDate) ?: Date(),
-            categoryId = TransactionsCategorizer.detectCategoryId(
-                tx.remittanceInformationUnstructured ?: "", categories, defaultCategoryId
-            ),
-            type = if ((tx.amount.amount.toDoubleOrNull() ?: 0.0) < 0) "Expense" else "Income"
+            categoryId = TransactionsCategorizer.detectCategoryId(description, categories, defaultCategoryId),
+            type = if (amount < 0) "Expense" else "Income"
         )
-    }
-
-    fun detectCategoryId(
-        description: String,
-        categoryList: List<Category>,
-        defaultCategoryId: Int
-    ): Int {
-
-        val lowerDescription = description.lowercase()
-        for (category in categoryList) {
-            if (lowerDescription.contains(category.name.lowercase())) {
-                return category.id
-            }
-        }
-        return defaultCategoryId
     }
 }
