@@ -23,6 +23,7 @@ import ch.zhaw.pa_fs25.userInterface.screen.TransactionsScreen
 import ch.zhaw.pa_fs25.viewmodel.TransactionViewModel
 import androidx.compose.ui.res.painterResource
 import ch.zhaw.pa_fs25.R
+import ch.zhaw.pa_fs25.ui.theme.PAFS25Theme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -47,6 +48,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
+            PAFS25Theme {
             // Grab the TransactionViewModel
             val transactionViewModel: TransactionViewModel = viewModel(factory = viewModelFactory)
 
@@ -55,6 +57,7 @@ class MainActivity : ComponentActivity() {
                 transactionViewModel,
                 repository = repository
             )
+        }
         }
     }
 }

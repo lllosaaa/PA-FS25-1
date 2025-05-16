@@ -78,18 +78,25 @@ fun DashboardScreen(viewModel: TransactionViewModel) {
         }
         FloatingActionButton(
             onClick = { showDialog = true },
-            modifier = Modifier.align(Alignment.BottomCenter)
+            modifier = Modifier.align(Alignment.BottomCenter),
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
         ) {
             Icon(imageVector = Icons.Default.Add, contentDescription = "Add Transaction")
         }
 
         FloatingActionButton(
             onClick = { showCategoryDialog = true },
-            modifier = Modifier.align(Alignment.BottomEnd)
+            modifier = Modifier.align(Alignment.BottomEnd),
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
         ) {
-
-            Icon(painter = painterResource(id = R.drawable.category_24px), contentDescription = "Add Category")
+            Icon(
+                painter = painterResource(id = R.drawable.category_24px),
+                contentDescription = "Add Category"
+            )
         }
+
 
         if (showDialog) {
             AddTransactionDialog(

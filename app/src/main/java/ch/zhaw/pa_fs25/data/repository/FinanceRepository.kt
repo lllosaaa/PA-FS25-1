@@ -48,7 +48,7 @@ class FinanceRepository(
             "Travel",
             "Gifts",
             "Electronics",
-            "Crypto/Exchange",
+            "Fees/Exchange",
             "Miscellaneous"
         )
 
