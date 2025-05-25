@@ -169,7 +169,7 @@ fun MainScreen(viewModel: TransactionViewModel, repository: FinanceRepository) {
                 BudgetScreen(viewModel)
             }
             composable("settings") {
-                SettingsScreen(repository)
+                SettingsScreen(repository, viewModel)
             }
         }
     }

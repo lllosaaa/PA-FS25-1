@@ -146,8 +146,13 @@ fun BudgetCategoryCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(4.dp),
-        shape = RoundedCornerShape(16.dp)
-    ) {
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
+    )
+    {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = category.name, style = MaterialTheme.typography.titleMedium)
             Text(
@@ -200,15 +205,6 @@ fun SetBudgetDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Set Budget for $categoryName") },
-        text = {
-            OutlinedTextField(
-                value = budgetText,
-                onValueChange = { budgetText = it },
-                label = { Text("Budget (CHF)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
         confirmButton = {
             Button(onClick = {
                 val parsed = budgetText.toDoubleOrNull()
@@ -219,6 +215,36 @@ fun SetBudgetDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
-        }
+        },
+        title = {
+            Text("Set Budget for $categoryName")
+        },
+        text = {
+            Surface(
+                color = MaterialTheme.colorScheme.surface, // override pale violet
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(8.dp)) {
+                    OutlinedTextField(
+                        value = budgetText,
+                        onValueChange = { budgetText = it },
+                        label = { Text("Budget (CHF)", color = MaterialTheme.colorScheme.onBackground) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                            focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                            unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                        )
+                    )
+                }
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface, // ← override dialog background!
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurface
     )
 }
+

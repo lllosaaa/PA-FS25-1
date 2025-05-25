@@ -16,6 +16,9 @@ private val DarkColorScheme = darkColorScheme(
     onBackground = White,
     surface = Gray30,
     onSurface = White,
+    surfaceVariant = Gray50,
+    onSurfaceVariant = White,
+    outline = Gray80,
     error = Color.Red,
     onError = White
 )
@@ -23,12 +26,15 @@ private val DarkColorScheme = darkColorScheme(
 private val LightColorScheme = lightColorScheme(
     primary = Gray30,
     onPrimary = White,
-    secondary = Gray50,
+    secondary = Gray60,
     onSecondary = White,
     background = White,
     onBackground = Black,
-    surface = Gray80,
+    surface = Gray100,
     onSurface = Black,
+    surfaceVariant = Gray80,
+    onSurfaceVariant = Black,
+    outline = Gray50,
     error = Color.Red,
     onError = White
 )
@@ -44,7 +50,6 @@ fun PAFS25Theme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
