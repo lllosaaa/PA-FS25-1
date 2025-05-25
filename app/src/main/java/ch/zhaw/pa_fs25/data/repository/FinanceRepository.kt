@@ -7,6 +7,7 @@ import ch.zhaw.pa_fs25.data.local.dao.BudgetDao
 import ch.zhaw.pa_fs25.data.local.dao.CategoryDao
 import ch.zhaw.pa_fs25.data.local.dao.TransactionDao
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 
 class FinanceRepository(
     private val transactionDao: TransactionDao,
@@ -58,6 +59,8 @@ class FinanceRepository(
             }
         }
     }
+
+
     suspend fun deleteCategoryIfUnused(category: Category): Boolean {
         val count = categoryDao.countTransactionsWithCategory(category.id)
         return if (count == 0) {

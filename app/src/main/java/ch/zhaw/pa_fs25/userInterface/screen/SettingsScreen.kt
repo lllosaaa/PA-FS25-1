@@ -1,5 +1,6 @@
 package ch.zhaw.pa_fs25.userInterface.screen
 
+import android.content.Context
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -12,8 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import ch.zhaw.pa_fs25.data.repository.FinanceRepository
+import ch.zhaw.pa_fs25.userInterface.activity.MainActivity
 import ch.zhaw.pa_fs25.util.saveCsvExport
 import ch.zhaw.pa_fs25.util.saveDatabaseBackup
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -67,8 +70,30 @@ fun SettingsScreen(repository: FinanceRepository) {
             Button(onClick = { exportLauncher.launch("transactions_backup_"+ currentDateTime.toString()+".csv") }) {
                 Text("Export CSV")
             }
+            Button(onClick = {
+                coroutineScope.launch {
+                    // Delete all transactions
+                    repository.deleteAllTransactions()
+
+                    // Delete all categories
+                    val categories = repository.getAllCategories().first()
+                    categories.forEach { repository.deleteCategoryIfUnused(it) }
+
+                    // Reset onboarding flag
+                    val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                    prefs.edit().putBoolean("is_first_launch", true).apply()
+
+                    //relaunch the app
+                    (context as MainActivity).recreate()
+                }
+            }) {
+                Text("🔄 Reset App (Demo)")
+            }
 
         }
 
     }
+
+
+
 }

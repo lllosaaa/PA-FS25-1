@@ -1,5 +1,6 @@
 package ch.zhaw.pa_fs25.userInterface.activity
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,6 +9,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -24,15 +26,13 @@ import ch.zhaw.pa_fs25.viewmodel.TransactionViewModel
 import androidx.compose.ui.res.painterResource
 import ch.zhaw.pa_fs25.R
 import ch.zhaw.pa_fs25.ui.theme.PAFS25Theme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import ch.zhaw.pa_fs25.userInterface.screen.OnboardingScreen
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Database + Repository
         val database = AppDatabase.getDatabase(this)
         val repository = FinanceRepository(
             database.transactionDao(),
@@ -40,27 +40,43 @@ class MainActivity : ComponentActivity() {
             budgetDao = database.budgetDao()
         )
 
-        // ViewModel factory
         val viewModelFactory = TransactionViewModel.Factory(repository)
-
-        CoroutineScope(Dispatchers.IO).launch {
-            repository.insertDefaultCategoriesIfMissing()
-        }
 
         setContent {
             PAFS25Theme {
-            // Grab the TransactionViewModel
-            val transactionViewModel: TransactionViewModel = viewModel(factory = viewModelFactory)
+                val transactionViewModel: TransactionViewModel = viewModel(factory = viewModelFactory)
+                val context = this
+                val showOnboarding = remember { mutableStateOf(isFirstLaunch(context)) }
 
-            // Show our main screen with bottom nav
-            MainScreen(
-                transactionViewModel,
-                repository = repository
-            )
-        }
+                if (showOnboarding.value) {
+                    OnboardingScreen(
+                        onFinish = {
+                            setFirstLaunchDone(context)
+                            showOnboarding.value = false
+                        },
+                        viewModel = transactionViewModel
+                    )
+                } else {
+                    MainScreen(
+                        viewModel = transactionViewModel,
+                        repository = repository
+                    )
+                }
+            }
         }
     }
+
+    private fun isFirstLaunch(context: Context): Boolean {
+        val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        return prefs.getBoolean("is_first_launch", true)
+    }
+
+    private fun setFirstLaunchDone(context: Context) {
+        val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putBoolean("is_first_launch", false).apply()
+    }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -104,7 +120,10 @@ fun MainScreen(viewModel: TransactionViewModel, repository: FinanceRepository) {
             )
         },
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ) {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 
@@ -115,19 +134,24 @@ fun MainScreen(viewModel: TransactionViewModel, repository: FinanceRepository) {
                         selected = currentRoute == item.route,
                         onClick = {
                             navController.navigate(item.route) {
-                                // Pop up to the start destination to avoid building back stack up
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
-                                // Avoid multiple copies of the same destination
                                 launchSingleTop = true
-                                // Restore state when reselecting a previously selected item
                                 restoreState = true
                             }
-                        }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
                     )
                 }
             }
+
         }
     ) { innerPadding ->
         NavHost(
