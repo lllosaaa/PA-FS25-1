@@ -1,18 +1,21 @@
 package ch.zhaw.pa_fs25.userInterface.screen
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.Color
 import ch.zhaw.pa_fs25.data.entity.Category
 import ch.zhaw.pa_fs25.viewmodel.TransactionViewModel
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -20,32 +23,47 @@ fun OnboardingScreen(
     onFinish: () -> Unit,
     viewModel: TransactionViewModel
 ) {
-    val context = LocalContext.current
     val selectedCategories = remember { mutableStateListOf<String>() }
     val customCategory = remember { mutableStateOf("") }
 
     val suggestedCategories = listOf(
         "Groceries", "Transportation", "Dining Out", "Health", "Entertainment",
         "Education", "Clothing", "Utilities", "Insurance", "Travel",
-        "Gifts", "Electronics", "Fees/Exchange", "Miscellaneous"
+        "Gifts", "Electronics", "Fees", "Savings"
     )
 
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp)
+        ) {
             Text(
-                "Set up your categories",
-                style = MaterialTheme.typography.titleLarge,
+                text = "Customize Your Budget",
+                style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
             Text(
-                "Suggested Categories:",
+                text = "Choose categories that reflect your spending habits.",
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Suggested Categories",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -61,13 +79,21 @@ fun OnboardingScreen(
                         },
                         label = {
                             Text(
-                                category,
+                                text = category,
                                 color = if (isSelected)
                                     MaterialTheme.colorScheme.onPrimary
                                 else
                                     MaterialTheme.colorScheme.onSurface
                             )
                         },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color.Transparent
+                            )
+                        }
+                        ,
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = if (isSelected)
                                 MaterialTheme.colorScheme.primary
@@ -78,50 +104,59 @@ fun OnboardingScreen(
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
             Text(
-                "Add Custom Category:",
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            OutlinedTextField(
-                value = customCategory.value,
-                onValueChange = { customCategory.value = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                label = {
-                    Text("Custom Category", color = MaterialTheme.colorScheme.onBackground)
-                },
-                textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground)
+                text = "Create Your Own Category",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(Modifier.height(8.dp))
-            Button(
-                onClick = {
-                    val name = customCategory.value.trim()
-                    if (name.isNotEmpty() && name !in selectedCategories) {
-                        selectedCategories.add(name)
-                        customCategory.value = ""
-                    }
-                },
-                modifier = Modifier.padding(top = 8.dp)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Add", color = MaterialTheme.colorScheme.onPrimary)
+                OutlinedTextField(
+                    value = customCategory.value,
+                    onValueChange = { customCategory.value = it },
+                    label = { Text("e.g. Coffee", color = MaterialTheme.colorScheme.onBackground) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        cursorColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Button(
+                    onClick = {
+                        val name = customCategory.value.trim()
+                        if (name.isNotEmpty() && name !in selectedCategories) {
+                            selectedCategories.add(name)
+                            customCategory.value = ""
+                        }
+                    },
+                    enabled = customCategory.value.trim().isNotEmpty()
+                ) {
+                    Text("Add")
+                }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(modifier = Modifier.weight(1f))
+
             Button(
                 onClick = {
-                    selectedCategories.forEach {
-                        if (it != "Miscellaneous") {
-                            viewModel.addCategory(Category(name = it))
-                        }
-                    }
-                   // viewModel.ensureMiscCategory() // Ensure Misc always exists
+                    selectedCategories.forEach { viewModel.addCategory(Category(name = it)) }
                     onFinish()
                 },
                 enabled = selectedCategories.isNotEmpty(),
-                modifier = Modifier.padding(top = 24.dp)
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Continue", color = MaterialTheme.colorScheme.onPrimary)
             }

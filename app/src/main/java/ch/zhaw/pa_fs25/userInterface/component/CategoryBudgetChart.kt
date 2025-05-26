@@ -34,7 +34,7 @@ fun CategoryBudgetChart(
     ) {
 
         Text(
-            text = categoryName,
+            text = "$categoryName (${String.format("%.2f", budgetLimit)} CHF)",
             style = MaterialTheme.typography.bodyMedium
         )
 

@@ -1,28 +1,19 @@
 package ch.zhaw.pa_fs25.userInterface.screen
 
-import android.app.DatePickerDialog
-import android.widget.DatePicker
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import ch.zhaw.pa_fs25.R
 import ch.zhaw.pa_fs25.data.entity.Category
 import ch.zhaw.pa_fs25.data.entity.Transaction
 import ch.zhaw.pa_fs25.userInterface.component.CategoryBudgetChart
 import ch.zhaw.pa_fs25.viewmodel.TransactionViewModel
-import java.text.SimpleDateFormat
+
 import java.util.*
 
 @Composable
@@ -38,30 +29,29 @@ fun DashboardScreen(viewModel: TransactionViewModel) {
         viewModel.rememberBudget(it.id, selectedMonth, selectedYear) > 0
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Column {
+    Column {
+        Row {
             Text(text = "Budget Overview", style = MaterialTheme.typography.titleLarge)
-
+        }
+        Row {
             MonthYearPicker(
                 selectedMonth = selectedMonth,
                 selectedYear = selectedYear,
                 onMonthChange = { selectedMonth = it },
                 onYearChange = { selectedYear = it }
             )
-
-            CategoryBudgetOverview(
-                categories = visibleCategories,
-                transactions = transactions,
-                selectedMonth = selectedMonth,
-                selectedYear = selectedYear,
-                viewModel = viewModel
-            )
         }
+        CategoryBudgetOverview(
+            categories = visibleCategories,
+            transactions = transactions,
+            selectedMonth = selectedMonth,
+            selectedYear = selectedYear,
+            viewModel = viewModel
+        )
+
     }
+
+
 }
 
 @Composable
