@@ -119,7 +119,6 @@ fun MainScreen(viewModel: TransactionViewModel, repository: FinanceRepository) {
         topBar = {
             TopAppBar(
                 title = {
-                    // You can automatically update the title based on the current route:
                     val backStackEntry by navController.currentBackStackEntryAsState()
                     val currentRoute = backStackEntry?.destination?.route ?: "dashboard"
                     Text(text = currentRoute.replaceFirstChar {

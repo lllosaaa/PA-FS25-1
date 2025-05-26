@@ -23,6 +23,7 @@ fun OnboardingScreen(
     onFinish: () -> Unit,
     viewModel: TransactionViewModel
 ) {
+    var showWelcomeDialog by remember { mutableStateOf(true) }
     val selectedCategories = remember { mutableStateListOf<String>() }
     val customCategory = remember { mutableStateOf("") }
 
@@ -41,6 +42,26 @@ fun OnboardingScreen(
                 .fillMaxSize()
                 .padding(24.dp)
         ) {
+            if (showWelcomeDialog) {
+                AlertDialog(
+                    onDismissRequest = { showWelcomeDialog = false },
+                    confirmButton = {
+                        Button(onClick = { showWelcomeDialog = false }) {
+                            Text("Got it")
+                        }
+                    },
+                    title = {
+                        Text("Welcome!", style = MaterialTheme.typography.titleLarge)
+                    },
+                    text = {
+                        Text("Let’s help you set up your budget. Select the categories you usually spend on, or add your own.")
+                    },
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    textContentColor = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
             Text(
                 text = "Customize Your Budget",
                 style = MaterialTheme.typography.headlineMedium,
@@ -92,8 +113,7 @@ fun OnboardingScreen(
                                 contentDescription = null,
                                 tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color.Transparent
                             )
-                        }
-                        ,
+                        },
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = if (isSelected)
                                 MaterialTheme.colorScheme.primary
