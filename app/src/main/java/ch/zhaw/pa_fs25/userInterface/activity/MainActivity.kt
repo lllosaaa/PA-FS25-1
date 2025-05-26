@@ -27,6 +27,10 @@ import androidx.compose.ui.res.painterResource
 import ch.zhaw.pa_fs25.R
 import ch.zhaw.pa_fs25.ui.theme.PAFS25Theme
 import ch.zhaw.pa_fs25.userInterface.screen.OnboardingScreen
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.util.Locale
 
 
 class MainActivity : ComponentActivity() {
@@ -39,6 +43,9 @@ class MainActivity : ComponentActivity() {
             categoryDao = database.categoryDao(),
             budgetDao = database.budgetDao()
         )
+        CoroutineScope(Dispatchers.IO).launch {
+            repository.ensureDefaultMiscCategory()
+        }
 
         val viewModelFactory = TransactionViewModel.Factory(repository)
 
@@ -115,7 +122,11 @@ fun MainScreen(viewModel: TransactionViewModel, repository: FinanceRepository) {
                     // You can automatically update the title based on the current route:
                     val backStackEntry by navController.currentBackStackEntryAsState()
                     val currentRoute = backStackEntry?.destination?.route ?: "dashboard"
-                    Text(text = currentRoute.capitalize())
+                    Text(text = currentRoute.replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(
+                            Locale.getDefault()
+                        ) else it.toString()
+                    })
                 }
             )
         },

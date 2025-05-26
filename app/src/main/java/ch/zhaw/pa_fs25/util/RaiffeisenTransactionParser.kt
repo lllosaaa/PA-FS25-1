@@ -29,7 +29,7 @@ class RaiffeisenTransactionParser : TransactionParser {
                 ?: return logError("Could not open InputStream for URI: $uri")
 
             val parser = com.opencsv.CSVParserBuilder().withSeparator(';').build()
-            val reader = com.opencsv.CSVReaderBuilder(InputStreamReader(inputStream))
+            val reader = CSVReaderBuilder(InputStreamReader(inputStream))
                 .withSkipLines(1)
                 .withCSVParser(parser)
                 .build()

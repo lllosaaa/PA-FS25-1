@@ -7,7 +7,6 @@ import ch.zhaw.pa_fs25.data.local.dao.BudgetDao
 import ch.zhaw.pa_fs25.data.local.dao.CategoryDao
 import ch.zhaw.pa_fs25.data.local.dao.TransactionDao
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 
 class FinanceRepository(
     private val transactionDao: TransactionDao,
@@ -35,30 +34,14 @@ class FinanceRepository(
         transactionDao.deleteAllTransactions()
     }
 
-    suspend fun insertDefaultCategoriesIfMissing() {
-        val defaultCategories = listOf(
-            "Groceries",
-            "Transportation",
-            "Dining Out",
-            "Health",
-            "Entertainment",
-            "Education",
-            "Clothing",
-            "Utilities",
-            "Insurance",
-            "Travel",
-            "Gifts",
-            "Electronics",
-            "Fees/Exchange",
-            "Miscellaneous"
-        )
-
-        for (name in defaultCategories) {
-            if (categoryDao.countByName(name) == 0) {
-                categoryDao.insertCategory(Category(name = name))
-            }
+    suspend fun ensureDefaultMiscCategory() {
+        val miscExists = categoryDao.getByName("Miscellaneous") != null
+        if (!miscExists) {
+            categoryDao.insert(Category(name = "Miscellaneous"))
         }
     }
+
+
 
 
     suspend fun deleteCategoryIfUnused(category: Category): Boolean {

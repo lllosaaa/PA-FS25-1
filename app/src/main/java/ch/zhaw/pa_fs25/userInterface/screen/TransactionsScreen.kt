@@ -168,11 +168,15 @@ fun TransactionsScreen(viewModel: TransactionViewModel) {
                 onDismiss = { showDialog = false },
                 onAddTransaction = {
                     viewModel.addTransaction(it)
+                    viewModel.setFilterMonthYear(selectedMonth, selectedYear)
                     showDialog = false
                 },
-                categories = categories.map { it.name }
+                categories = categories
             )
+
+
         }
+
     }
 
 }
@@ -290,11 +294,11 @@ fun TransactionItem(transaction: Transaction, categories: List<Category>) {
 fun AddTransactionDialog(
     onDismiss: () -> Unit,
     onAddTransaction: (Transaction) -> Unit,
-    categories: List<String>
+    categories: List<Category>
 ) {
     var description by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf<Category?>(null) }
     var type by remember { mutableStateOf("Expense") }
 
     val context = LocalContext.current
@@ -321,71 +325,69 @@ fun AddTransactionDialog(
         containerColor = MaterialTheme.colorScheme.surface,
         titleContentColor = MaterialTheme.colorScheme.onSurface,
         textContentColor = MaterialTheme.colorScheme.onSurface,
-        title = {
-            Text("Add Transaction")
-        },
+        title = { Text("Add Transaction") },
         text = {
             Column {
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Description", color = MaterialTheme.colorScheme.onBackground) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = textFieldColors()
+                    label = { Text("Description") },
+                    modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
-                    label = { Text("Amount", color = MaterialTheme.colorScheme.onBackground) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = textFieldColors()
+                    label = { Text("Amount") },
+                    modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
                 CategoryDropdown(
                     categories = categories,
-                    selectedCategory = category,
-                    onCategorySelected = { category = it }
+                    selectedCategory = selectedCategory,
+                    onCategorySelected = { selectedCategory = it }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
                     value = type,
                     onValueChange = { type = it },
-                    label = { Text("Type (Income/Expense)", color = MaterialTheme.colorScheme.onBackground) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = textFieldColors()
+                    label = { Text("Type (Income/Expense)") },
+                    modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
                     value = selectedDate,
                     onValueChange = {},
-                    label = { Text("Date", color = MaterialTheme.colorScheme.onBackground) },
+                    label = { Text("Date") },
                     readOnly = true,
                     trailingIcon = {
                         IconButton(onClick = showDatePicker) {
                             Icon(Icons.Default.DateRange, contentDescription = "Select date")
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = textFieldColors()
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },
         confirmButton = {
-            Button(onClick = {
-                val transaction = Transaction(
-                    description = description.ifBlank { "No description" },
-                    amount = amount.toDoubleOrNull() ?: 0.0,
-                    date = calendar.time,
-                    type = if (type.equals("income", ignoreCase = true)) "Income" else "Expense",
-                    categoryId = categories.indexOf(category) + 1
-                )
-                onAddTransaction(transaction)
-            }) {
+            Button(
+                onClick = {
+                    val categoryId = selectedCategory?.id ?: return@Button
+                    val transaction = Transaction(
+                        description = description.ifBlank { "No description" },
+                        amount = amount.toDoubleOrNull() ?: 0.0,
+                        date = calendar.time,
+                        type = if (type.equals("income", ignoreCase = true)) "Income" else "Expense",
+                        categoryId = categoryId
+                    )
+                    onAddTransaction(transaction)
+
+                }
+            ) {
                 Text("Add")
             }
         },
@@ -396,6 +398,7 @@ fun AddTransactionDialog(
         }
     )
 }
+
 
 @Composable
 private fun textFieldColors(): TextFieldColors = TextFieldDefaults.colors(
@@ -411,41 +414,48 @@ private fun textFieldColors(): TextFieldColors = TextFieldDefaults.colors(
 
 @Composable
 fun CategoryDropdown(
-    categories: List<String>,
-    selectedCategory: String,
-    onCategorySelected: (String) -> Unit
+    categories: List<Category>,
+    selectedCategory: Category?,
+    onCategorySelected: (Category) -> Unit
 ) {
-
     var expanded by remember { mutableStateOf(false) }
 
     OutlinedTextField(
-        value = selectedCategory,
-        onValueChange = { },
+        value = selectedCategory?.name ?: "",
+        onValueChange = {},
         label = { Text("Category") },
         modifier = Modifier.fillMaxWidth(),
         readOnly = true,
         trailingIcon = {
             IconButton(onClick = { expanded = !expanded }) {
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = null
-                )
+                Icon(Icons.Default.ArrowDropDown, contentDescription = null)
             }
         }
     )
 
     DropdownMenu(
         expanded = expanded,
-        onDismissRequest = { expanded = false }
+        onDismissRequest = { expanded = false },
+        modifier = Modifier.background(MaterialTheme.colorScheme.surface)
     ) {
-        categories.forEach { categoryOption ->
+        categories.forEach { category ->
             DropdownMenuItem(
-                text = { Text(categoryOption) },
+                text = {
+                    Text(
+                        text = category.name,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
                 onClick = {
-                    onCategorySelected(categoryOption)
+                    onCategorySelected(category)
                     expanded = false
-                }
+                },
+                colors = MenuDefaults.itemColors(
+                    textColor = MaterialTheme.colorScheme.onSurface,
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                )
             )
         }
     }
+
 }

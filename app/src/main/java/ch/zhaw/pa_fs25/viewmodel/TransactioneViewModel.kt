@@ -65,6 +65,8 @@ class TransactionViewModel(private val repository: FinanceRepository) : ViewMode
         println("✅ Inserting transaction: $transaction")
         viewModelScope.launch {
             repository.insertTransaction(transaction)
+            selectedMonthYear.value = selectedMonthYear.value
+
         }
     }
 

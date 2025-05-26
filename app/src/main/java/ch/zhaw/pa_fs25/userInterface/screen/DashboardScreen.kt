@@ -2,17 +2,7 @@ package ch.zhaw.pa_fs25.userInterface.screen
 
 import android.app.DatePickerDialog
 import android.widget.DatePicker
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -20,25 +10,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -50,15 +23,20 @@ import ch.zhaw.pa_fs25.data.entity.Transaction
 import ch.zhaw.pa_fs25.userInterface.component.CategoryBudgetChart
 import ch.zhaw.pa_fs25.viewmodel.TransactionViewModel
 import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
-
+import java.util.*
 
 @Composable
 fun DashboardScreen(viewModel: TransactionViewModel) {
     val transactions by viewModel.transactions.collectAsState()
     val categories by viewModel.categories.collectAsState()
 
+    val calendar = remember { Calendar.getInstance() }
+    var selectedMonth by remember { mutableStateOf(calendar.get(Calendar.MONTH)) }
+    var selectedYear by remember { mutableStateOf(calendar.get(Calendar.YEAR)) }
+
+    val visibleCategories = categories.filter {
+        viewModel.rememberBudget(it.id, selectedMonth, selectedYear) > 0
+    }
 
     Box(
         modifier = Modifier
@@ -66,22 +44,33 @@ fun DashboardScreen(viewModel: TransactionViewModel) {
             .padding(16.dp)
     ) {
         Column {
-
             Text(text = "Budget Overview", style = MaterialTheme.typography.titleLarge)
 
+            MonthYearPicker(
+                selectedMonth = selectedMonth,
+                selectedYear = selectedYear,
+                onMonthChange = { selectedMonth = it },
+                onYearChange = { selectedYear = it }
+            )
+
             CategoryBudgetOverview(
-                categories = categories,
-                transactions = transactions
+                categories = visibleCategories,
+                transactions = transactions,
+                selectedMonth = selectedMonth,
+                selectedYear = selectedYear,
+                viewModel = viewModel
             )
         }
-
     }
-
 }
+
 @Composable
 fun CategoryBudgetOverview(
     categories: List<Category>,
-    transactions: List<Transaction>
+    transactions: List<Transaction>,
+    selectedMonth: Int,
+    selectedYear: Int,
+    viewModel: TransactionViewModel
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 160.dp),
@@ -89,19 +78,50 @@ fun CategoryBudgetOverview(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(categories.filter { it.budgetLimit > 0 }) { category ->
+        items(categories) { category ->
+            val budgetLimit by viewModel.rememberBudgetState(category.id, selectedMonth, selectedYear)
             val spent = transactions
                 .filter { it.categoryId == category.id && it.amount < 0 }
+                .filter {
+                    val cal = Calendar.getInstance().apply { time = it.date }
+                    cal.get(Calendar.MONTH) == selectedMonth && cal.get(Calendar.YEAR) == selectedYear
+                }
                 .sumOf { it.amount }
 
-            CategoryBudgetChart(
-                categoryName = category.name,
-                budgetLimit = category.budgetLimit,
-                spentAmount = spent
-            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(4.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CategoryBudgetChart(
+                        categoryName = category.name,
+                        budgetLimit = budgetLimit,
+                        spentAmount = spent,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(170.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Remaining: ${"%.2f".format(budgetLimit + spent)} CHF",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (budgetLimit + spent < 0)
+                            MaterialTheme.colorScheme.error
+                        else
+                            MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
         }
     }
 }
-
-
-

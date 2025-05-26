@@ -124,16 +124,7 @@ fun SettingsScreen(repository: FinanceRepository, viewModel: TransactionViewMode
             )
         }
 
-        if (showDialog) {
-            AddTransactionDialog(
-                onDismiss = { showDialog = false },
-                onAddTransaction = { transaction ->
-                    viewModel.addTransaction(transaction)
-                    showDialog = false
-                },
-                categories = categories.map { it.name }
-            )
-        }
+
         if (showCategoryDialog) {
             AddCategoryDialog(
                 onDismiss = { showCategoryDialog = false },

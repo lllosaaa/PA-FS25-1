@@ -1,5 +1,6 @@
 package ch.zhaw.pa_fs25.userInterface.screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -30,7 +31,15 @@ fun BudgetScreen(viewModel: TransactionViewModel) {
         viewModel.setFilterMonthYear(selectedMonth, selectedYear)
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                if (editMode.value) MaterialTheme.colorScheme.surfaceVariant
+                else MaterialTheme.colorScheme.background
+            )
+    )
+    {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -38,7 +47,7 @@ fun BudgetScreen(viewModel: TransactionViewModel) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Budgets",
+                text = "Overview",
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.weight(1f)
             )
@@ -54,10 +63,13 @@ fun BudgetScreen(viewModel: TransactionViewModel) {
             onYearChange = { selectedYear = it }
         )
 
-        val visibleCategories = if (editMode.value) {
-            categories
+        val sortedCategories = if (editMode.value) {
+            val categoryHasExpenses = categories.associateWith { cat ->
+                filteredTransactions.any { it.categoryId == cat.id && it.amount < 0 }
+            }
+            categories.sortedByDescending { categoryHasExpenses[it] == true }
         } else {
-            categories.filter { viewModel.rememberBudget(it.id, selectedMonth, selectedYear) > 0 }
+            categories
         }
 
         LazyColumn(
@@ -66,23 +78,35 @@ fun BudgetScreen(viewModel: TransactionViewModel) {
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(visibleCategories) { category ->
-                val budgetLimit by viewModel.rememberBudgetState(category.id, selectedMonth, selectedYear)
-                val spent = filteredTransactions
-                    .filter { it.categoryId == category.id && it.amount < 0 }
-                    .sumOf { it.amount }
-
-                BudgetCategoryCard(
-                    category = category,
-                    spentAmount = spent,
-                    budgetLimit = budgetLimit,
-                    onSetBudget = {
-                        viewModel.setBudgetForCategory(category.id, selectedMonth, selectedYear, it)
-                    },
-                    editMode = editMode.value
+            items(sortedCategories) { category ->
+                val budgetLimit by viewModel.rememberBudgetState(
+                    category.id,
+                    selectedMonth,
+                    selectedYear
                 )
+                if (editMode.value || budgetLimit > 0) {
+                    val spent = filteredTransactions
+                        .filter { it.categoryId == category.id && it.amount < 0 }
+                        .sumOf { it.amount }
+
+                    BudgetCategoryCard(
+                        category = category,
+                        spentAmount = spent,
+                        budgetLimit = budgetLimit,
+                        onSetBudget = {
+                            viewModel.setBudgetForCategory(
+                                category.id,
+                                selectedMonth,
+                                selectedYear,
+                                it
+                            )
+                        },
+                        editMode = editMode.value
+                    )
+                }
             }
         }
+
     }
 }
 
@@ -148,9 +172,10 @@ fun BudgetCategoryCard(
         elevation = CardDefaults.cardElevation(4.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface
+            containerColor = MaterialTheme.colorScheme.background,  // ensures no purple tint
+            contentColor = MaterialTheme.colorScheme.onBackground
         )
+
     )
     {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -161,10 +186,13 @@ fun BudgetCategoryCard(
             )
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = progress,
+                progress = { progress },
                 modifier = Modifier.fillMaxWidth(),
-                strokeCap = StrokeCap.Round
+                color = MaterialTheme.colorScheme.primary, // or a custom gray like Gray50
+                trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f), // optional: makes the track subtle
+                strokeCap = StrokeCap.Round,
             )
+
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Remaining: ${"%.2f".format(remaining)} CHF",
@@ -221,7 +249,7 @@ fun SetBudgetDialog(
         },
         text = {
             Surface(
-                color = MaterialTheme.colorScheme.surface, // override pale violet
+                color = MaterialTheme.colorScheme.surface,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(8.dp)) {
@@ -242,7 +270,7 @@ fun SetBudgetDialog(
                 }
             }
         },
-        containerColor = MaterialTheme.colorScheme.surface, // ← override dialog background!
+        containerColor = MaterialTheme.colorScheme.surface,
         titleContentColor = MaterialTheme.colorScheme.onSurface,
         textContentColor = MaterialTheme.colorScheme.onSurface
     )
