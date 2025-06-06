@@ -11,28 +11,29 @@ class SwissTransactionMapperTest {
     private val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
     @Test
-    fun `map converts swiss transaction correctly`() {
+    fun `map uses creditor name and sets income type`() {
         val tx = SwissTransaction(
             transactionId = "1",
             bookingDate = "2024-05-01",
-            transactionAmount = SwissTransaction.Amount(amount = "12.50", currency = "CHF"),
-            creditorName = "Coop",
+            transactionAmount = SwissTransaction.Amount(amount = "100.00", currency = "CHF"),
+            creditorName = "Salary Payment",
             remittanceInformationUnstructured = null
         )
 
         val categories = listOf(
-            Category(id = 1, name = "Miscellaneous"),
-            Category(id = 2, name = "Groceries/Supermarkets", keywords = "coop")
+            Category(id = 1, name = "Income"),
+            Category(id = 2, name = "Expenses")
         )
 
         val mapped = SwissTransactionMapper.map(tx, categories, 1)
 
-        assertEquals("Coop", mapped.description)
-        assertEquals(12.50, mapped.amount, 0.001)
+        assertEquals("Salary Payment", mapped.description)
+        assertEquals(100.00, mapped.amount, 0.001)
         assertEquals(sdf.parse("2024-05-01"), mapped.date)
-        assertEquals(2, mapped.categoryId)
+        assertEquals(1, mapped.categoryId)
         assertEquals("Income", mapped.type)
     }
+
 
     @Test
     fun `map uses remittance info and sets expense type`() {
@@ -55,6 +56,30 @@ class SwissTransactionMapperTest {
         assertEquals(-5.00, mapped.amount, 0.001)
         assertEquals(sdf.parse("2024-05-02"), mapped.date)
         assertEquals(3, mapped.categoryId)
+        assertEquals("Expense", mapped.type)
+    }
+
+    @Test
+    fun `map uses default category when no match found`() {
+        val tx = SwissTransaction(
+            transactionId = "3",
+            bookingDate = "2024-05-03",
+            transactionAmount = SwissTransaction.Amount(amount = "-10.00", currency = "CHF"),
+            creditorName = "Unknown Transaction",
+            remittanceInformationUnstructured = null
+        )
+
+        val categories = listOf(
+            Category(id = 1, name = "Income"),
+            Category(id = 2, name = "Expenses")
+        )
+
+        val mapped = SwissTransactionMapper.map(tx, categories, 1)
+
+        assertEquals("Unknown Transaction", mapped.description)
+        assertEquals(-10.00, mapped.amount, 0.001)
+        assertEquals(sdf.parse("2024-05-03"), mapped.date)
+        assertEquals(1, mapped.categoryId) // Default category
         assertEquals("Expense", mapped.type)
     }
 }

@@ -20,4 +20,12 @@ class CategoryExtensionsTest {
 
         assertEquals("Unknown", categories.getCategoryName(99))
     }
+
+    @Test
+    fun `getCategoryName returns Unknown for empty list`() {
+        val categories = emptyList<Category>()
+
+        assertEquals("Unknown", categories.getCategoryName(1))
+    }
+
 }

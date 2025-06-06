@@ -40,4 +40,19 @@ class TransactionsCategorizerTest {
         val id = TransactionsCategorizer.detectCategoryId("Salary", categories, 1, type = "Income")
         assertEquals(1, id)
     }
+
+    @Test
+    fun `detectCategoryId returns default for unknown category`() {
+        val categories = listOf(Category(id = 1, name = "Miscellaneous"))
+        val id = TransactionsCategorizer.detectCategoryId("Unknown", categories, 1, type = "Expense")
+        assertEquals(1, id)
+    }
+
+    @Test
+    fun `detectCategoryId returns default for empty categories list`() {
+        val categories = emptyList<Category>()
+        val id = TransactionsCategorizer.detectCategoryId("Anything", categories, 1, type = "Expense")
+        assertEquals(1, id)
+    }
+    
 }
