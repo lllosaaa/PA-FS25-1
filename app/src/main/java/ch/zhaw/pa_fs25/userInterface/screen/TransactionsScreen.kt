@@ -261,30 +261,57 @@ fun TransactionItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .clickable { showDialog = true },  // 👈 apre il dialogo
+            .height(90.dp)
+            .clickable { showDialog = true },
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {
-        Row(modifier = Modifier.padding(16.dp)) {
-            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Column(
+                modifier = Modifier.weight(1.5f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(transaction.description, style = MaterialTheme.typography.titleSmall)
-                Text(dateString, style = MaterialTheme.typography.bodySmall)
             }
-            Spacer(modifier = Modifier.width(8.dp))
-            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+
+            Column(
+                modifier = Modifier.weight(1.2f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(categoryName, style = MaterialTheme.typography.bodySmall)
                 Text(type, style = MaterialTheme.typography.bodySmall)
             }
-            Text(
-                text = "${transaction.amount} CHF",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(start = 8.dp)
-            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(dateString, style = MaterialTheme.typography.bodySmall)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "${transaction.amount} CHF",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
         }
     }
+
 
     if (showDialog) {
         AlertDialog(

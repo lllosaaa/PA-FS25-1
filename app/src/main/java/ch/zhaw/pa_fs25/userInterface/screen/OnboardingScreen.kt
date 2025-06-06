@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import ch.zhaw.pa_fs25.data.entity.Category
 import ch.zhaw.pa_fs25.viewmodel.TransactionViewModel
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -25,12 +27,13 @@ fun OnboardingScreen(
 ) {
     var showWelcomeDialog by remember { mutableStateOf(true) }
     val selectedCategories = remember { mutableStateListOf<String>() }
+    val categoryKeywords = remember { mutableStateMapOf<String, String>() }
     val customCategory = remember { mutableStateOf("") }
 
     val suggestedCategories = listOf(
-        "Groceries", "Transportation", "Dining Out", "Health", "Entertainment",
-        "Education", "Clothing", "Utilities", "Insurance", "Travel",
-        "Gifts", "Electronics", "Fees", "Savings"
+        "Groceries/Supermarkets", "Transportation", "Restaurants/Dining", "Health/Medical", "Entertainment",
+        "Education", "Clothing/Apparel", "Utilities", "Insurance", "Travel",
+        "Gifts", "Electronics", "ATM fees/Bank charges"
     )
 
     Surface(
@@ -62,28 +65,10 @@ fun OnboardingScreen(
                 )
             }
 
-            Text(
-                text = "Customize Your Budget",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Choose categories that reflect your spending habits.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
+            Text("Customize Your Budget", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "Suggested Categories",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-
+            Text("Suggested Categories", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(8.dp))
 
             FlowRow(
@@ -95,8 +80,13 @@ fun OnboardingScreen(
                     val isSelected = category in selectedCategories
                     AssistChip(
                         onClick = {
-                            if (isSelected) selectedCategories.remove(category)
-                            else selectedCategories.add(category)
+                            if (isSelected) {
+                                selectedCategories.remove(category)
+                                categoryKeywords.remove(category)
+                            } else {
+                                selectedCategories.add(category)
+                                categoryKeywords[category] = ""
+                            }
                         },
                         label = {
                             Text(
@@ -125,13 +115,7 @@ fun OnboardingScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Create Your Own Category",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-
+            Text("Create Your Own Category", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(
@@ -141,15 +125,10 @@ fun OnboardingScreen(
                 OutlinedTextField(
                     value = customCategory.value,
                     onValueChange = { customCategory.value = it },
-                    label = { Text("e.g. Coffee", color = MaterialTheme.colorScheme.onBackground) },
+                    label = { Text("e.g. Subscriptions") },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                        cursorColor = MaterialTheme.colorScheme.primary
-                    )
                 )
 
                 Spacer(modifier = Modifier.width(12.dp))
@@ -159,6 +138,7 @@ fun OnboardingScreen(
                         val name = customCategory.value.trim()
                         if (name.isNotEmpty() && name !in selectedCategories) {
                             selectedCategories.add(name)
+                            categoryKeywords[name] = ""
                             customCategory.value = ""
                         }
                     },
@@ -168,11 +148,37 @@ fun OnboardingScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(24.dp))
+
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(selectedCategories) { category ->
+                    if (!suggestedCategories.contains(category)) {
+                        Column {
+                            Text(text = "$category Keywords", style = MaterialTheme.typography.titleSmall)
+                            OutlinedTextField(
+                                value = categoryKeywords[category] ?: "",
+                                onValueChange = { categoryKeywords[category] = it },
+                                label = { Text("Comma-separated keywords (e.g. a, b, c)") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+            }
+
 
             Button(
                 onClick = {
-                    selectedCategories.forEach { viewModel.addCategory(Category(name = it)) }
+                    selectedCategories.forEach {
+                        val keywords = categoryKeywords[it]?.trim() ?: ""
+                        viewModel.addCategory(Category(name = it, keywords = keywords))
+                    }
                     onFinish()
                 },
                 enabled = selectedCategories.isNotEmpty(),
