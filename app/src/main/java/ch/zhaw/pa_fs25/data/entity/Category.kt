@@ -9,7 +9,8 @@ data class Category(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val name: String,
-    val budgetLimit: Double = 0.0
+    val budgetLimit: Double = 0.0,
+    val keywords: String = ""
 )
 
 // Extension function to get the name of a category by its id
