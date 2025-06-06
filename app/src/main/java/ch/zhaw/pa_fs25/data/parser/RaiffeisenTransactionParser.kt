@@ -1,12 +1,12 @@
-package ch.zhaw.pa_fs25.util
+package ch.zhaw.pa_fs25.data.parser
 
 import android.content.Context
 import android.net.Uri
 import android.util.Log
 import ch.zhaw.pa_fs25.data.entity.Category
 import ch.zhaw.pa_fs25.data.entity.Transaction
-import ch.zhaw.pa_fs25.data.parser.TransactionParser
 import ch.zhaw.pa_fs25.util.TransactionsCategorizer
+import com.opencsv.CSVParserBuilder
 import com.opencsv.CSVReaderBuilder
 import java.io.InputStreamReader
 import java.text.SimpleDateFormat
@@ -28,8 +28,8 @@ class RaiffeisenTransactionParser : TransactionParser {
             val inputStream = context.contentResolver.openInputStream(uri)
                 ?: return logError("Could not open InputStream for URI: $uri")
 
-            val parser = com.opencsv.CSVParserBuilder().withSeparator(';').build()
-            val reader = com.opencsv.CSVReaderBuilder(InputStreamReader(inputStream))
+            val parser = CSVParserBuilder().withSeparator(';').build()
+            val reader = CSVReaderBuilder(InputStreamReader(inputStream))
                 .withSkipLines(1)
                 .withCSVParser(parser)
                 .build()
@@ -48,7 +48,8 @@ class RaiffeisenTransactionParser : TransactionParser {
                     val type = if (amount < 0) "Expense" else "Income"
 
                     val categoryId = TransactionsCategorizer.detectCategoryId(
-                        description, categories, defaultCategory?.id ?: 1
+                        description, categories, defaultCategory?.id ?: 1,
+                        type = type
                     )
 
                     val transaction = Transaction(

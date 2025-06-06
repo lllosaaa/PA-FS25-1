@@ -32,6 +32,11 @@ interface CategoryDao {
     @Query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE categoryId = :categoryId AND amount < 0")
     suspend fun getSpentForCategory(categoryId: Int): Double
 
+    @Query("SELECT * FROM categories WHERE name = :name LIMIT 1")
+    suspend fun getByName(name: String): Category?
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(category: Category): Long
 
 
 }

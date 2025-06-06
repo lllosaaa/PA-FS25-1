@@ -34,30 +34,16 @@ class FinanceRepository(
         transactionDao.deleteAllTransactions()
     }
 
-    suspend fun insertDefaultCategoriesIfMissing() {
-        val defaultCategories = listOf(
-            "Groceries",
-            "Transportation",
-            "Dining Out",
-            "Health",
-            "Entertainment",
-            "Education",
-            "Clothing",
-            "Utilities",
-            "Insurance",
-            "Travel",
-            "Gifts",
-            "Electronics",
-            "Crypto/Exchange",
-            "Miscellaneous"
-        )
-
-        for (name in defaultCategories) {
-            if (categoryDao.countByName(name) == 0) {
-                categoryDao.insertCategory(Category(name = name))
-            }
+    suspend fun ensureDefaultMiscCategory() {
+        val miscExists = categoryDao.getByName("Miscellaneous") != null
+        if (!miscExists) {
+            categoryDao.insert(Category(name = "Miscellaneous"))
         }
     }
+
+
+
+
     suspend fun deleteCategoryIfUnused(category: Category): Boolean {
         val count = categoryDao.countTransactionsWithCategory(category.id)
         return if (count == 0) {
@@ -91,6 +77,15 @@ class FinanceRepository(
     suspend fun deleteBudget(categoryId: Int, month: Int, year: Int) {
         budgetDao.deleteBudget(categoryId, month, year)
     }
+
+    suspend fun updateTransaction(transaction: Transaction) {
+        transactionDao.updateTransaction(transaction)
+    }
+
+    suspend fun updateTransactionCategory(transactionId: Int, newCategoryId: Int) {
+        transactionDao.updateTransactionCategory(transactionId, newCategoryId)
+    }
+
 
 
 

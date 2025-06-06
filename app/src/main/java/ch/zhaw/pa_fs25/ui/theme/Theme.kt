@@ -1,43 +1,48 @@
 package ch.zhaw.pa_fs25.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = Gray100,
+    onPrimary = Black,
+    secondary = Gray90,
+    onSecondary = Black,
+    background = Black,
+    onBackground = White,
+    surface = Gray30,
+    onSurface = White,
+    surfaceVariant = Gray50,
+    onSurfaceVariant = White,
+    outline = Gray80,
+    error = Color.Red,
+    onError = White
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = Gray30,
+    onPrimary = White,
+    secondary = Gray60,
+    onSecondary = White,
+    background = White,
+    onBackground = Black,
+    surface = Gray100,
+    onSurface = Black,
+    surfaceVariant = Gray80,
+    onSurfaceVariant = Black,
+    outline = Gray50,
+    error = Color.Red,
+    onError = White
 )
 
 @Composable
 fun PAFS25Theme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -45,7 +50,6 @@ fun PAFS25Theme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }

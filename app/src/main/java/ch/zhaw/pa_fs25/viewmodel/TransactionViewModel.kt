@@ -6,7 +6,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import ch.zhaw.pa_fs25.data.entity.Category
 import ch.zhaw.pa_fs25.data.entity.Transaction
+import ch.zhaw.pa_fs25.data.remote.SwissNextGenApi
 import ch.zhaw.pa_fs25.data.repository.FinanceRepository
+import ch.zhaw.pa_fs25.util.SwissTransactionMapper
+import ch.zhaw.pa_fs25.util.TransactionsCategorizer
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
@@ -59,8 +62,11 @@ class TransactionViewModel(private val repository: FinanceRepository) : ViewMode
     }
 
     fun addTransaction(transaction: Transaction) {
+        println("✅ Inserting transaction: $transaction")
         viewModelScope.launch {
             repository.insertTransaction(transaction)
+            selectedMonthYear.value = selectedMonthYear.value
+
         }
     }
 
@@ -101,6 +107,63 @@ class TransactionViewModel(private val repository: FinanceRepository) : ViewMode
     suspend fun getSpentForCategory(categoryId: Int): Double {
         return repository.getSpentForCategory(categoryId)
     }
+
+    fun importSwissMockTransactions(api: SwissNextGenApi, onResult: (Int) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val accounts = api.getAccounts().accounts
+                val firstAccount = accounts.firstOrNull()
+                if (firstAccount == null) {
+                    onResult(0)
+                    return@launch
+                }
+
+                val rawHref = firstAccount._links.transactions.href
+                val fullUrl = "http://10.0.2.2:3000$rawHref"
+                val txResponse = api.getTransactionsByUrl(fullUrl)
+
+                // 💡 Wait for categories to load before proceeding
+                val categoryList = categories.first()
+                val defaultCategoryId = categoryList.firstOrNull()?.id ?: 1
+
+                val converted = txResponse.transactions.booked.map {
+                    val description = it.remittanceInformationUnstructured ?: it.creditorName ?: "No description"
+                    val transaction = SwissTransactionMapper.map(it, categoryList, defaultCategoryId)
+                    transaction.copy(
+                        categoryId = TransactionsCategorizer.detectCategoryId(
+                            description,
+                            categoryList,
+                            defaultCategoryId,
+                            type = if (transaction.amount < 0) "Expense" else "Income"
+                        ),
+                    )
+                }
+
+                if (converted.isEmpty()) {
+                    onResult(0)
+                } else {
+                    converted.forEach { transaction ->
+                        addTransaction(transaction)
+                    }
+                    onResult(converted.size)
+                }
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onResult(0)
+            }
+        }
+    }
+
+    fun updateTransactionCategory(transaction: Transaction, newCategoryId: Int) {
+        viewModelScope.launch {
+            val updated = transaction.copy(categoryId = newCategoryId)
+            repository.updateTransaction(updated)
+        }
+    }
+
+
+
 
     class Factory(private val repository: FinanceRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

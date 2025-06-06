@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import ch.zhaw.pa_fs25.data.entity.Transaction
 import kotlinx.coroutines.flow.Flow
 import java.util.Date
@@ -67,7 +68,23 @@ interface TransactionDao {
     @Query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE amount > 0")
     fun getTotalIncome(): Flow<Double>
 
+    /**
+     * Get total spent for a specific category.
+     */
     @Query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE categoryId = :categoryId AND amount < 0")
     suspend fun getSpentForCategory(categoryId: Int): Double
+
+    /**
+     * Update a specific transaction.
+     */
+
+    @Update
+    suspend fun updateTransaction(transaction: Transaction)
+
+    /**
+     * Update the category of a specific transaction.
+     */
+    @Query("UPDATE transactions SET categoryId = :newCategoryId WHERE id = :transactionId")
+    suspend fun updateTransactionCategory(transactionId: Int, newCategoryId: Int)
 
 }

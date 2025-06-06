@@ -63,7 +63,10 @@ class CsvTransactionParser : TransactionParser {
             val description = row[4].trim()
             val amount = row[5].trim().toDoubleOrNull() ?: 0.0
             val type = if (amount < 0) "Expense" else "Income"
-            val categoryId = TransactionsCategorizer.detectCategoryId(description, categories, defaultCategory?.id ?: 1)
+            val categoryId = TransactionsCategorizer.detectCategoryId(
+                description, categories, defaultCategory?.id ?: 1,
+                type = type
+            )
 
             Transaction(
                 description = description,

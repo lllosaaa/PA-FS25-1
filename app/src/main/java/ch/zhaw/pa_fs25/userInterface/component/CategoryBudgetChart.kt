@@ -21,13 +21,25 @@ fun CategoryBudgetChart(
     spentAmount: Double,
     modifier: Modifier = Modifier
 ) {
-    val remaining = (budgetLimit + spentAmount).coerceAtLeast(0.0)
+    val remaining = budgetLimit + spentAmount
     val progress = if (budgetLimit > 0) (-spentAmount / budgetLimit).coerceIn(0.0, 1.0) else 0.0
+
+    val progressPercent = (progress * 100).toInt()
+    val centerTextColor = if (remaining < 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+    val ringColor = if (remaining < 0) Color.Red else Color(0xFF4CAF50)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.padding(8.dp)
     ) {
+
+        Text(
+            text = "$categoryName (${String.format("%.2f", budgetLimit)} CHF)",
+            style = MaterialTheme.typography.bodyMedium
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.size(130.dp)
@@ -37,7 +49,6 @@ fun CategoryBudgetChart(
                 val radius = size.minDimension / 2f
                 val center = Offset(size.width / 2, size.height / 2)
 
-                // Background arc
                 drawArc(
                     color = Color.LightGray,
                     startAngle = -90f,
@@ -48,9 +59,8 @@ fun CategoryBudgetChart(
                     style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                 )
 
-                // Foreground arc
                 drawArc(
-                    color = Color(0xFF4CAF50),
+                    color = ringColor,
                     startAngle = -90f,
                     sweepAngle = (360 * progress).toFloat(),
                     useCenter = false,
@@ -60,25 +70,28 @@ fun CategoryBudgetChart(
                 )
             }
 
-            // Center value
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "${"%.0f".format(remaining)}",
-                    style = MaterialTheme.typography.bodyLarge
+                    text = "$progressPercent%",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = centerTextColor
                 )
                 Text(
-                    text = "CHF",
+                    text = "used",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(4.dp))
-
         Text(
-            text = categoryName,
-            style = MaterialTheme.typography.bodyMedium
+            text = if (remaining >= 0)
+                "Remaining: ${"%.2f".format(remaining)} CHF"
+            else
+                "Over: ${"%.2f".format(-remaining)} CHF",
+            style = MaterialTheme.typography.bodySmall,
+            color = if (remaining < 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
         )
     }
 }

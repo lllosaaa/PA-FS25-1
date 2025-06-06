@@ -98,6 +98,17 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 
     //opneCSV
-    implementation("com.opencsv:opencsv:5.6")
+    implementation(libs.opencsv)
+
+    //Retrofit
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.logging.interceptor)
+    implementation(libs.okhttp)
+
+    //Color
+    implementation(libs.material3)
+
 
 }
