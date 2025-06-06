@@ -133,7 +133,8 @@ class TransactionViewModel(private val repository: FinanceRepository) : ViewMode
                         categoryId = TransactionsCategorizer.detectCategoryId(
                             description,
                             categoryList,
-                            defaultCategoryId
+                            defaultCategoryId,
+                            type = if (transaction.amount < 0) "Expense" else "Income"
                         ),
                     )
                 }
@@ -153,6 +154,15 @@ class TransactionViewModel(private val repository: FinanceRepository) : ViewMode
             }
         }
     }
+
+    fun updateTransactionCategory(transaction: Transaction, newCategoryId: Int) {
+        viewModelScope.launch {
+            val updated = transaction.copy(categoryId = newCategoryId)
+            repository.updateTransaction(updated)
+        }
+    }
+
+
 
 
     class Factory(private val repository: FinanceRepository) : ViewModelProvider.Factory {

@@ -24,13 +24,23 @@ object TransactionsCategorizer {
 
     fun categorizeTransaction(description: String): String {
         val lowerCaseDescription = description.lowercase()
+
+        for ((category, keywords) in categoryKeywordMap) {
+            if (keywords.any { lowerCaseDescription.contains(" $it ") || lowerCaseDescription.endsWith(" $it") || lowerCaseDescription.startsWith("$it ") || lowerCaseDescription == it }) {
+                return category
+            }
+        }
+
         for ((category, keywords) in categoryKeywordMap) {
             if (keywords.any { lowerCaseDescription.contains(it) }) {
                 return category
             }
         }
-        return "Miscellaneous" // Default category if no match is found
+
+        return "Miscellaneous"
     }
+
+
 
     fun categorizeTransactions(transactions: List<String>): Map<String, List<String>> {
         val categorizedTransactions = mutableMapOf<String, MutableList<String>>()
@@ -46,10 +56,19 @@ object TransactionsCategorizer {
         return categorizedTransactions
     }
 
-    fun detectCategoryId(description: String, categories: List<Category>, i: Int): Int {
-        val categoryName = categorizeTransaction(description)
-        val category = categories.find { it.name == categoryName }
-        return category?.id ?: i // Return the default category ID if not found
+    fun detectCategoryId(
+        description: String,
+        categories: List<Category>,
+        defaultId: Int,
+        type: String
+    ): Int {
+        if (type.equals("Income", ignoreCase = true)) return defaultId
 
+        val categoryName = categorizeTransaction(description)
+        val category = categories.find { it.name.equals(categoryName, ignoreCase = true) }
+        return category?.id ?: defaultId
     }
+
+
+
 }

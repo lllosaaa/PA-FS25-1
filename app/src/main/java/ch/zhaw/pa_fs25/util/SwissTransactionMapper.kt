@@ -17,7 +17,10 @@ object SwissTransactionMapper {
             description = description,
             amount = amount,
             date = sdf.parse(tx.bookingDate) ?: Date(),
-            categoryId = TransactionsCategorizer.detectCategoryId(description, categories, defaultCategoryId),
+            categoryId = TransactionsCategorizer.detectCategoryId(
+                description, categories, defaultCategoryId,
+                type = if (amount < 0) "Expense" else "Income"
+            ),
             type = if (amount < 0) "Expense" else "Income"
         )
     }

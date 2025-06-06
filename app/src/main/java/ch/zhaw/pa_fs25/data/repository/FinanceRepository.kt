@@ -78,6 +78,15 @@ class FinanceRepository(
         budgetDao.deleteBudget(categoryId, month, year)
     }
 
+    suspend fun updateTransaction(transaction: Transaction) {
+        transactionDao.updateTransaction(transaction)
+    }
+
+    suspend fun updateTransactionCategory(transactionId: Int, newCategoryId: Int) {
+        transactionDao.updateTransactionCategory(transactionId, newCategoryId)
+    }
+
+
 
 
 

@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -146,7 +147,14 @@ fun TransactionsScreen(viewModel: TransactionViewModel) {
 
             LazyColumn {
                 items(filteredTransactions) { transaction ->
-                    TransactionItem(transaction = transaction, categories = categories)
+                    TransactionItem(
+                        transaction = transaction,
+                        categories = categories,
+                        onCategoryChange = { newCategoryId ->
+                            viewModel.updateTransactionCategory(transaction, newCategoryId)
+                        }
+                    )
+
                 }
             }
         }
@@ -229,57 +237,46 @@ fun DropdownMenuSelector(label: String, options: List<String>, selectedIndex: In
 }
 
 @Composable
-fun TransactionItem(transaction: Transaction, categories: List<Category>) {
+fun TransactionItem(
+    transaction: Transaction,
+    categories: List<Category>,
+    onCategoryChange: (Int) -> Unit
+) {
+    var showDialog by remember { mutableStateOf(false) }
+
     val dateString = remember(transaction.date) {
         val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         dateFormatter.format(transaction.date)
     }
 
-    // Find the category name based on the categoryId
     val categoryName = remember(transaction.categoryId, categories) {
         categories.find { it.id == transaction.categoryId }?.name ?: "General"
     }
-    val type = remember(transaction.type){
-        if(transaction.type.equals("Income", ignoreCase = true)){
-            "Income"
-        }else{
-            "Expense"
-        }
+
+    val type = remember(transaction.type) {
+        if (transaction.type.equals("Income", ignoreCase = true)) "Income" else "Expense"
     }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .clickable { showDialog = true },  // 👈 apre il dialogo
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
         )
-
     ) {
         Row(modifier = Modifier.padding(16.dp)) {
             Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-                Text(
-                    text = transaction.description,
-                    style = MaterialTheme.typography.titleSmall
-                )
-                Text(
-                    text = dateString,
-                    style = MaterialTheme.typography.bodySmall
-                )
+                Text(transaction.description, style = MaterialTheme.typography.titleSmall)
+                Text(dateString, style = MaterialTheme.typography.bodySmall)
             }
             Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-                Text(
-                    text = categoryName,
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Text(
-                    text= type,
-                    style = MaterialTheme.typography.bodySmall
-
-                )
+                Text(categoryName, style = MaterialTheme.typography.bodySmall)
+                Text(type, style = MaterialTheme.typography.bodySmall)
             }
             Text(
                 text = "${transaction.amount} CHF",
@@ -288,7 +285,34 @@ fun TransactionItem(transaction: Transaction, categories: List<Category>) {
             )
         }
     }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Change Category") },
+            text = {
+                Column {
+                    categories.forEach { category ->
+                        TextButton(onClick = {
+                            onCategoryChange(category.id)
+                            showDialog = false
+                        }) {
+                            Text(category.name)
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
+
+
 
 @Composable
 fun AddTransactionDialog(
